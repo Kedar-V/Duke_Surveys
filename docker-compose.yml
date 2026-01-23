@@ -1,16 +1,14 @@
 services:
-  postgres:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
-      POSTGRES_DB: surveydb
+  mongodb:
+    image: mongo:7
     ports:
-      - "5432:5432"
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: surveydb
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mongodata:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app -d surveydb"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -23,9 +21,10 @@ services:
       - ./backend/app:/app/app
     environment:
       PYTHONUNBUFFERED: "1"
-      DATABASE_URL: "postgresql+psycopg://app:app@postgres:5432/surveydb"
+      MONGO_URL: "mongodb://mongodb:27017"
+      MONGO_DB: "surveydb"
     depends_on:
-      postgres:
+      mongodb:
         condition: service_healthy
 
   frontend:
@@ -40,4 +39,4 @@ services:
       - backend
 
 volumes:
-  pgdata:
+  mongodata:
