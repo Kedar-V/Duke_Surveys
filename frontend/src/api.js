@@ -38,3 +38,16 @@ export async function submitInstance(sessionId, instanceId, answers) {
   }
   return readJson(r);
 }
+
+export async function submitClientIntake(payload) {
+  const r = await fetch(`${API_BASE}/client-intake`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`POST /client-intake ${r.status}: ${t}`);
+  }
+  return readJson(r);
+}
