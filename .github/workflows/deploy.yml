@@ -16,12 +16,12 @@ jobs:
       #     username: ${{ secrets.DOCKERHUB_USERNAME }}
       #     password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: kedarvaidya05/bitcoin-app:latest
+      # - name: Build and push Docker image
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: kedarvaidya05/bitcoin-app:latest
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
@@ -58,7 +58,7 @@ jobs:
             else
               echo "Cleaning directory and cloning repo..."
               # sudo rm -rf /home/ec2-user/app/*
-              git clone https://github.com/Kedar-V/IDS-706-DataEngineering.git .
+              git clone https://github.com/Kedar-V/Duke_Surveys.git .
             fi
 
       - name: Start containers on EC2
@@ -69,16 +69,16 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ec2-user/app
-            docker-compose pull
             docker-compose down
+            docker-compose build
             docker-compose up -d
 
 
-      - name: Run startup.sh inside container
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_IP }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            docker exec -i python_week4 bash -c "chmod +x /app/startup/startup.sh && nohup /app/startup/startup.sh > /app/startup/startup.log 2>&1 &"
+      # - name: Run startup.sh inside container
+      #   uses: appleboy/ssh-action@v0.1.7
+      #   with:
+      #     host: ${{ secrets.EC2_IP }}
+      #     username: ec2-user
+      #     key: ${{ secrets.EC2_SSH_KEY }}
+      #     script: |
+      #       docker exec -i python_week4 bash -c "chmod +x /app/startup/startup.sh && nohup /app/startup/startup.sh > /app/startup/startup.log 2>&1 &"
