@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #0f172a;
+  background-color: #f8fafc;
+}
+
+body {
+  font-family: Inter, system-ui, sans-serif;
+}
+
+h1, h2, h3, h4 {
+  font-family: Merriweather, Georgia, serif;
+}
+
+@layer components {
+  .card {
+    @apply rounded-card bg-white shadow-card border border-slate-200;
+  }
+
+  .section-title {
+    @apply text-duke-900 font-heading text-xl border-b border-duke-500/30 pb-2 mb-4;
+  }
+
+  .label {
+    @apply text-sm font-semibold text-slate-700 mb-1 block;
+  }
+
+  .input-base {
+    @apply w-full rounded-control border border-slate-200 bg-white px-3 py-2 text-slate-950 focus:outline-none focus:ring-2 focus:ring-duke-700/40 focus:border-duke-700;
+  }
+
+  .select-base {
+    @apply w-full rounded-control border border-slate-200 bg-white px-3 py-2 text-slate-950 focus:outline-none focus:ring-2 focus:ring-duke-700/40 focus:border-duke-700;
+  }
+
+  .textarea-base {
+    @apply w-full rounded-control border border-slate-200 bg-white px-3 py-2 text-slate-950 focus:outline-none focus:ring-2 focus:ring-duke-700/40 focus:border-duke-700;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-control bg-duke-900 text-white px-5 py-2 font-semibold shadow hover:bg-duke-700 transition;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-control border border-duke-900 text-duke-900 px-5 py-2 font-semibold hover:bg-duke-900 hover:text-white transition;
+  }
+
+  .muted {
+    @apply text-slate-500 text-sm;
+  }
+
+  .error-text {
+    @apply text-sm text-red-700;
+  }
+
+  .success-text {
+    @apply text-sm text-green-700;
+  }
+}
