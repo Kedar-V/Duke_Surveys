@@ -722,7 +722,10 @@ function ClientInfo() {
   const isLastPage = page === pages.length - 1;
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10">
+    <div className="min-h-screen bg-slate-50 px-4 py-10 relative">
+      <div className="absolute top-4 left-4">
+        <img src="/assets/dukelogo.png" alt="Duke University" className="h-28 w-auto" />
+      </div>
       <div className="card max-w-3xl mx-auto p-8">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -784,7 +787,7 @@ function ClientInfo() {
 
           {submitted && (
             <div className="success-text">
-              Form submitted. API integration pending.
+              Form submitted. 
             </div>
           )}
           {submitError && (

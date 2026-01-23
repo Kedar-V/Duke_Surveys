@@ -133,6 +133,46 @@ def mark_submitted(session_id: str) -> None:
 def save_intake_form(payload: dict) -> str:
     db = get_mongo()
     now = utcnow()
-    doc = {**payload, "created_at": now, "updated_at": now}
+    doc = {
+        "company": {
+            "name": payload.get("company_name"),
+            "industry": payload.get("company_industry"),
+            "website": payload.get("company_website"),
+        },
+        "contact": {
+            "name": payload.get("contact_name"),
+            "role": payload.get("contact_role"),
+            "email": payload.get("contact_email"),
+        },
+        "project": {
+            "title": payload.get("project_title"),
+            "summary_short": payload.get("project_summary_short"),
+            "description_detailed": payload.get("project_description_detailed"),
+            "problem_statement": payload.get("problem_statement"),
+            "expected_outcomes": payload.get("expected_outcomes", []),
+            "deliverables": payload.get("deliverables", []),
+            "success_criteria": payload.get("success_criteria", []),
+            "scope_clarity": payload.get("scope_clarity"),
+        },
+        "competencies": {
+            "required_skills": payload.get("required_skills", []),
+            "technical_domains": payload.get("technical_domains", []),
+        },
+        "logistics": {
+            "weekly_time_commitment": payload.get("weekly_time_commitment"),
+            "confidentiality_requirements": payload.get("confidentiality_requirements"),
+            "data_access": payload.get("data_access"),
+        },
+        "sector": payload.get("project_sector"),
+        "supplementary": {
+            "documents": payload.get("supplementary_documents", []),
+            "video_links": [str(v) for v in payload.get("video_links", [])],
+        },
+        "meta": {
+            "source": "clientinfo",
+            "created_at": now,
+            "updated_at": now,
+        },
+    }
     res = db.client_intake_forms.insert_one(doc)
     return str(res.inserted_id)

@@ -175,7 +175,7 @@ def submit(session_id: str):
 
 @app.post("/client-intake")
 def create_client_intake(payload: IntakeForm):
-    intake_id = save_intake_form(payload.model_dump())
+    intake_id = save_intake_form(payload.model_dump(mode="json"))
     return {"id": intake_id}
 
 
