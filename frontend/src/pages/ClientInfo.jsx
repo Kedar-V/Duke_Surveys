@@ -50,11 +50,17 @@ const TECH_DOMAINS = [
 const SKILLS = [
   "Python",
   "SQL",
-  "ML",
+  "Machine Learning",
   "NLP",
-  "Cloud",
+  "Statistics",
+  "Data Visualization",
+  "Data Engineering",
+  "Cloud (AWS/GCP/Azure)",
+  "APIs / Integration",
+  "ETL / ELT",
+  "Product Management",
+  "UX Research",
   "Project Management",
-  "UX",
 ];
 
 const SCOPE = ["well defined", "partially defined", "exploratory"];
