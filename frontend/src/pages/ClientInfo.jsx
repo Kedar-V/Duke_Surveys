@@ -60,21 +60,18 @@ const SKILLS = [
 const SCOPE = ["well defined", "partially defined", "exploratory"];
 const OTHER_OPTION = "__other__";
 
-function MultiSelect({ options, value, onChange, label, otherValue, onOtherChange }) {
-  const showOther = value.includes(OTHER_OPTION);
+function SingleSelect({ options, value, onChange, label, otherValue, onOtherChange }) {
+  const showOther = value === OTHER_OPTION;
 
   return (
     <div className="mb-4">
       <label className="label">{label}</label>
       <select
-        multiple
         value={value}
-        onChange={(e) => {
-          const vals = Array.from(e.target.selectedOptions, (o) => o.value);
-          onChange(vals);
-        }}
-        className="select-base min-h-[60px]"
+        onChange={(e) => onChange(e.target.value)}
+        className="select-base"
       >
+        <option value="">Select...</option>
         {options.map((opt) => (
           <option key={opt} value={opt}>
             {opt}
@@ -110,9 +107,9 @@ function ClientInfo() {
     success_criteria: [""],
     scope_clarity: "",
     scope_clarity_other: "",
-    required_skills: [],
+    required_skills: "",
     required_skills_other: "",
-    technical_domains: [],
+    technical_domains: "",
     technical_domains_other: "",
     data_access: "",
     project_sector: "",
@@ -249,16 +246,10 @@ function ClientInfo() {
       if (!form.data_access) {
         e.data_access = "Required";
       }
-      if (
-        form.required_skills.includes(OTHER_OPTION) &&
-        !form.required_skills_other.trim()
-      ) {
+      if (form.required_skills === OTHER_OPTION && !form.required_skills_other.trim()) {
         e.required_skills_other = "Please specify the skill";
       }
-      if (
-        form.technical_domains.includes(OTHER_OPTION) &&
-        !form.technical_domains_other.trim()
-      ) {
+      if (form.technical_domains === OTHER_OPTION && !form.technical_domains_other.trim()) {
         e.technical_domains_other = "Please specify the domain";
       }
     }
@@ -299,12 +290,14 @@ function ClientInfo() {
       }
     }
 
-    const normalizedSkills = form.required_skills
-      .filter((v) => v !== OTHER_OPTION)
-      .concat(form.required_skills_other.trim() ? [form.required_skills_other.trim()] : []);
-    const normalizedDomains = form.technical_domains
-      .filter((v) => v !== OTHER_OPTION)
-      .concat(form.technical_domains_other.trim() ? [form.technical_domains_other.trim()] : []);
+    const normalizedSkills =
+      form.required_skills === OTHER_OPTION
+        ? (form.required_skills_other.trim() ? [form.required_skills_other.trim()] : [])
+        : (form.required_skills ? [form.required_skills] : []);
+    const normalizedDomains =
+      form.technical_domains === OTHER_OPTION
+        ? (form.technical_domains_other.trim() ? [form.technical_domains_other.trim()] : [])
+        : (form.technical_domains ? [form.technical_domains] : []);
 
     const payload = {
       ...form,
@@ -614,7 +607,7 @@ function ClientInfo() {
     <>
       <h2 className="section-title">4. Required Competencies and Technologies</h2>
 
-      <MultiSelect
+      <SingleSelect
         options={SKILLS}
         value={form.required_skills}
         onChange={(v) => setForm((f) => ({ ...f, required_skills: v }))}
@@ -626,7 +619,7 @@ function ClientInfo() {
         <div className="error-text">{errors.required_skills_other}</div>
       )}
 
-      <MultiSelect
+      <SingleSelect
         options={TECH_DOMAINS}
         value={form.technical_domains}
         onChange={(v) => setForm((f) => ({ ...f, technical_domains: v }))}
