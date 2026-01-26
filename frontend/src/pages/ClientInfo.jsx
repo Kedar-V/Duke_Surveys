@@ -211,9 +211,6 @@ function ClientInfo() {
       if (!form.scope_clarity) {
         e.scope_clarity = "Required";
       }
-      if (form.scope_clarity === OTHER_OPTION && !form.scope_clarity_other.trim()) {
-        e.scope_clarity_other = "Please specify";
-      }
     }
 
     if (pageIdx === 3) {
@@ -308,10 +305,7 @@ function ClientInfo() {
         form.project_sector === OTHER_OPTION
           ? form.project_sector_other.trim()
           : form.project_sector,
-      scope_clarity:
-        form.scope_clarity === OTHER_OPTION
-          ? form.scope_clarity_other.trim()
-          : form.scope_clarity,
+      scope_clarity: form.scope_clarity,
       required_skills: normalizedSkills,
       technical_domains: normalizedDomains,
       expected_outcomes: form.expected_outcomes
@@ -590,24 +584,9 @@ function ClientInfo() {
             {s}
           </option>
         ))}
-        <option value={OTHER_OPTION}>Other</option>
       </select>
       {errors.scope_clarity && (
         <div className="error-text">{errors.scope_clarity}</div>
-      )}
-      {form.scope_clarity === OTHER_OPTION && (
-        <>
-          <input
-            name="scope_clarity_other"
-            value={form.scope_clarity_other}
-            onChange={handleChange}
-            placeholder="Describe project scope"
-            className="input-base mt-2"
-          />
-          {errors.scope_clarity_other && (
-            <div className="error-text">{errors.scope_clarity_other}</div>
-          )}
-        </>
       )}
     </>,
 
