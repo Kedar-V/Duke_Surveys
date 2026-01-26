@@ -245,14 +245,6 @@ function ClientInfo() {
     }
 
     if (pageIdx === 4) {
-      if (form.supplementary_documents.length > 3) {
-        e.supplementary_documents = "Max 3 files";
-      }
-      if (
-        form.supplementary_documents.some((f) => f.size > 5* 1024* 1024)
-      ) {
-        e.supplementary_documents = "Max 5MB per file";
-      }
       if (
         form.video_links.some((l) => l && !/^https?:\/\/.+\..+/.test(l))
       ) {
@@ -689,8 +681,7 @@ function ClientInfo() {
         team a clearer view of your goals, expected outcomes, and any existing work. This
         allows the students to prepare more thoroughly, ask better questions during the
         kickoff, and begin the engagement with a stronger foundation. Permitted formats
-        include PDF, document files, and presentation files. You may upload up to three files,
-        each up to five megabytes.
+        include PDF, document files, and presentation files.
       </p>
       <input
         type="file"
