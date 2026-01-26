@@ -2,21 +2,50 @@ import React, { useState } from "react";
 import { submitClientIntake } from "../api.js";
 
 const INDUSTRIES = [
-  "Finance",
   "Healthcare",
+  "Finance",
   "Retail",
+  "E Commerce",
   "Climate",
-  "Social Impact",
+  "Sustainability",
   "Education",
   "Manufacturing",
+  "Technology",
+  "Energy",
+  "Mobility",
+  "Media",
+  "Real Estate",
+  "Government",
+  "Agriculture",
+  "Sports"
 ];
+
 
 const SECTORS = [
   "Healthcare",
   "Finance",
-  "Retail",
-  "Climate",
-  "Public Sector",
+  "Retail / E-commerce",
+  "Climate / Sustainability",
+  "Public Sector / Gov",
+  "Education",
+  "Manufacturing",
+  "Energy / Utilities",
+  "Transportation / Mobility",
+  "Logistics / Supply Chain",
+  "Media / Entertainment",
+  "Telecommunications",
+  "Real Estate / PropTech",
+  "Agriculture / FoodTech",
+  "Social Impact / Nonprofit",
+  "Insurance",
+  "Travel / Hospitality",
+  "Sports / Fitness",
+  "Cybersecurity",
+  "Biotech / Life Sciences",
+  "AdTech / MarTech",
+  "FinTech",
+  "HealthTech",
+  "EdTech",
 ];
 
 const TECH_DOMAINS = [
