@@ -22,10 +22,29 @@ const SECTORS = [
 const TECH_DOMAINS = [
   "AI/ML",
   "Data Engineering",
-  "Web Development",
   "Analytics",
-  "Project Management",
+  "Web Development",
+  "Mobile Development",
+  "Cloud & DevOps",
   "Product Innovation",
+  "UX/UI Design",
+  "Cybersecurity",
+  "Data Visualization",
+  "Business Intelligence",
+  "MLOps",
+  "NLP",
+  "Computer Vision",
+  "IoT / Edge",
+  "FinTech",
+  "HealthTech",
+  "ClimateTech",
+  "EduTech",
+  "AdTech",
+  "MarTech",
+  "GovTech / Civic Tech",
+  "Supply Chain / Logistics",
+  "E-commerce",
+  "Gaming / Media",
 ];
 
 const SKILLS = [
@@ -325,7 +344,7 @@ function ClientInfo() {
     <>
       <h2 className="section-title">1. Corporate Entity Details</h2>
 
-      <label className="label">Company Name*</label>
+      <label className="label">Organisation Name*</label>
       <input
         name="company_name"
         value={form.company_name}
@@ -337,7 +356,7 @@ function ClientInfo() {
         <div className="error-text">{errors.company_name}</div>
       )}
 
-      <label className="label">Company Industry*</label>
+      <label className="label">Organisation Industry*</label>
       <select
         name="company_industry"
         value={form.company_industry}
@@ -370,7 +389,7 @@ function ClientInfo() {
         </>
       )}
 
-      <label className="label">Company Website</label>
+      <label className="label">Organisation Website</label>
       <input
         name="company_website"
         value={form.company_website}
@@ -750,7 +769,7 @@ function ClientInfo() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-heading text-duke-900">
-              Company Project Intake Form
+              Organisation Project Intake Form
             </h1>
             <p className="muted">
               Step {page + 1} of {pages.length}
