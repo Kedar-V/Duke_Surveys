@@ -463,6 +463,15 @@ function ClientInfo() {
         maxLength={5000}
         className="textarea-base"
       />
+      <div
+        className={
+          form.project_description.length > 5000
+            ? "text-sm text-red-700"
+            : "text-sm text-slate-500"
+        }
+      >
+        {form.project_description.length}/5000
+      </div>
       {errors.project_description && (
         <div className="error-text">{errors.project_description}</div>
       )}
