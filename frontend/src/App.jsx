@@ -1,131 +1,139 @@
-import React, { useEffect, useState } from "react";
-import BlockRenderer from "./BlockRenderer.jsx";
-import { createSession, getInstance, submitInstance } from "./api.js";
+import React, { useMemo, useState } from "react";
+import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
+import TopTenBar from "./components/topten/TopTenBar.jsx";
+import OverflowList from "./components/topten/OverflowList.jsx";
+import { useDndSensors } from "./components/topten/dndSensors.js";
+import { useTopTenStore } from "./components/topten/useTopTenStore.js";
+import { projectsCatalog } from "./data/projectsCatalog.js";
 
 export default function App() {
-  const [sessionId, setSessionId] = useState(null);
+  const sensors = useDndSensors();
+  const { topTen, removeFromTopTen, reorderTopTen } = useTopTenStore();
+  const [activeId, setActiveId] = useState(null);
 
-  // Backend-driven navigation
-  const [instanceId, setInstanceId] = useState("intro__1");
-  const [history, setHistory] = useState([]);
-
-  // Current instance payload and answers
-  const [payload, setPayload] = useState(null);
-  const [answers, setAnswers] = useState({});
-  const [done, setDone] = useState(false);
-
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState(null);
-
-  // Create session once
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const s = await createSession();
-        if (!mounted) return;
-        setSessionId(s.session_id);
-      } catch (e) {
-        if (!mounted) return;
-        setErr(String(e));
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
+  const projectsById = useMemo(() => {
+    return projectsCatalog.reduce((acc, project) => {
+      acc[project.id] = project;
+      return acc;
+    }, {});
   }, []);
 
-  // Load current instance whenever instanceId changes
-  useEffect(() => {
-    if (!sessionId || done) return;
+  function handleDragStart(event) {
+    setActiveId(event.active.id);
+  }
 
-    let mounted = true;
-    (async () => {
-      setLoading(true);
-      setErr(null);
-      try {
-        const p = await getInstance(sessionId, instanceId);
-        if (!mounted) return;
-        setPayload(p);
-        setAnswers(p.answers || {});
-      } catch (e) {
-        if (!mounted) return;
-        setErr(String(e));
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
+  function handleDragEnd(event) {
+    const { active, over } = event;
+    setActiveId(null);
 
-    return () => {
-      mounted = false;
+    if (!over) return;
+
+    const activeIdValue = active.id;
+    const overId = over.id;
+
+    if (activeIdValue === overId) return;
+
+    const rankedIds = topTen.slice(0, 10);
+    const overflowIds = topTen.slice(10);
+
+    const sourceContainer = active.data.current?.container;
+    let destContainer = over.data.current?.container;
+
+    if (!destContainer) {
+      if (overId === "topten") destContainer = "topten";
+      if (overId === "overflow") destContainer = "overflow";
+    }
+
+    const isRankedTarget = destContainer === "topten";
+    const isOverflowTarget = destContainer === "overflow";
+
+    const nextRanked = [...rankedIds];
+    const nextOverflow = [...overflowIds];
+
+    const removeFromList = (list) => {
+      const index = list.indexOf(activeIdValue);
+      if (index !== -1) list.splice(index, 1);
+      return index;
     };
-  }, [sessionId, instanceId, done]);
 
-  if (err) {
-    return (
-      <div style={{ padding: 40, color: "crimson", whiteSpace: "pre-wrap" }}>
-        {err}
-      </div>
-    );
-  }
+    if (sourceContainer === "topten") {
+      removeFromList(nextRanked);
+    } else if (sourceContainer === "overflow") {
+      removeFromList(nextOverflow);
+    }
 
-  if (!sessionId) {
-    return <div style={{ padding: 40 }}>Creating session…</div>;
-  }
+    const insertIntoList = (list) => {
+      const index = list.indexOf(overId);
+      if (index === -1) {
+        list.push(activeIdValue);
+      } else {
+        list.splice(index, 0, activeIdValue);
+      }
+    };
 
-  if (done) {
-    return (
-      <div style={{ padding: 40 }}>
-        <h2>Thank you</h2>
-        <div>Survey complete.</div>
-      </div>
-    );
-  }
-
-  if (loading || !payload) {
-    return <div style={{ padding: 40 }}>Loading…</div>;
-  }
-
-  async function onNext() {
-    const res = await submitInstance(sessionId, instanceId, answers);
-
-    if (res.done) {
-      setDone(true);
+    if (isRankedTarget) {
+      insertIntoList(nextRanked);
+    } else if (isOverflowTarget) {
+      insertIntoList(nextOverflow);
+    } else {
       return;
     }
 
-    const nextId = res.next_instance_id;
-    if (!nextId) {
-      setDone(true);
-      return;
+    if (nextRanked.length > 10) {
+      const spill = nextRanked.pop();
+      if (spill) nextOverflow.unshift(spill);
     }
 
-    setHistory((h) => [...h, instanceId]);
-    setInstanceId(nextId);
+    reorderTopTen([...nextRanked, ...nextOverflow]);
   }
 
-  function onBack() {
-    setHistory((h) => {
-      if (h.length === 0) return h;
-      const prev = h[h.length - 1];
-      setInstanceId(prev);
-      return h.slice(0, -1);
-    });
-  }
-
-  // If you want a different label on the last page, you can special-case it later.
-  const nextLabel = "Next";
+  const activeProject = activeId ? projectsById[activeId] : null;
+  const rankedIds = topTen.slice(0, 10);
+  const overflowIds = topTen.slice(10);
 
   return (
-    <BlockRenderer
-      title={payload.title}
-      elements={payload.elements}
-      answers={answers}
-      setAnswers={setAnswers}
-      onBack={onBack}
-      onNext={onNext}
-      nextLabel={nextLabel}
-      disableBack={history.length === 0}
-    />
+    <div className="min-h-screen bg-slate-50 pb-48">
+      <div className="max-w-6xl mx-auto px-4 py-10 space-y-6">
+        <div>
+          <h1 className="text-3xl font-heading text-duke-900">Capstone Project Ranking</h1>
+          <p className="muted mt-2">
+            Reorder your selected projects to finalize your ranking.
+          </p>
+        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <OverflowList
+            overflowIds={overflowIds}
+            projectsById={projectsById}
+            onRemove={removeFromTopTen}
+          />
+          <TopTenBar
+            topTen={rankedIds}
+            totalCount={topTen.length}
+            projectsById={projectsById}
+            onRemove={removeFromTopTen}
+          />
+          <DragOverlay>
+            {activeProject ? (
+              <div className="card p-4 shadow-lg scale-[1.02]">
+                <div className="text-sm font-semibold text-duke-900">{activeProject.title}</div>
+                <div className="text-xs text-slate-500 mt-1">{activeProject.company}</div>
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+        {topTen.length === 0 ? (
+          <div className="card p-6 text-center">
+            <div className="text-duke-900 font-semibold">No projects selected yet</div>
+            <div className="muted mt-2">Go back to the catalog to add projects.</div>
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }

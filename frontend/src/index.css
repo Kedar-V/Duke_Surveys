@@ -48,6 +48,14 @@ h1, h2, h3, h4 {
     @apply inline-flex items-center justify-center rounded-control border border-duke-900 text-duke-900 px-5 py-2 font-semibold hover:bg-duke-900 hover:text-white transition;
   }
 
+  .pill {
+    @apply inline-flex items-center rounded-full border border-duke-700 text-duke-700 px-3 py-1 text-xs font-semibold;
+  }
+
+  .tag {
+    @apply inline-flex items-center rounded-full bg-slate-100 text-slate-700 px-3 py-1 text-xs font-medium;
+  }
+
   .muted {
     @apply text-slate-500 text-sm;
   }
@@ -60,3 +68,26 @@ h1, h2, h3, h4 {
     @apply text-sm text-green-700;
   }
 }
+
+  @keyframes top-ten-shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(-6px);
+    }
+    40% {
+      transform: translateX(6px);
+    }
+    60% {
+      transform: translateX(-4px);
+    }
+    80% {
+      transform: translateX(4px);
+    }
+  }
+
+  .animate-shake {
+    animation: top-ten-shake 0.3s ease-in-out;
+  }

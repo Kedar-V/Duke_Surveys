@@ -19,12 +19,6 @@ const SECTORS = [
   "Public Sector",
 ];
 
-const CONFIDENTIALITY = [
-  "None",
-  "Non-Disclosure Agreement (NDA) required",
-  "Intellectual Property (IP) agreement required",
-];
-
 const TECH_DOMAINS = [
   "AI/ML",
   "Data Engineering",
@@ -44,9 +38,12 @@ const SKILLS = [
   "UX",
 ];
 
-const SCOPE = ["fully defined", "partially defined", "exploratory"];
+const SCOPE = ["well defined", "partially defined", "exploratory"];
+const OTHER_OPTION = "__other__";
 
-function MultiSelect({ options, value, onChange, label }) {
+function MultiSelect({ options, value, onChange, label, otherValue, onOtherChange }) {
+  const showOther = value.includes(OTHER_OPTION);
+
   return (
     <div className="mb-4">
       <label className="label">{label}</label>
@@ -64,7 +61,16 @@ function MultiSelect({ options, value, onChange, label }) {
             {opt}
           </option>
         ))}
+        <option value={OTHER_OPTION}>Other</option>
       </select>
+      {showOther && (
+        <input
+          value={otherValue}
+          onChange={(e) => onOtherChange(e.target.value)}
+          placeholder="Enter a custom option"
+          className="input-base mt-2"
+        />
+      )}
     </div>
   );
 }
@@ -73,24 +79,25 @@ function ClientInfo() {
   const [form, setForm] = useState({
     company_name: "",
     company_industry: "",
+    company_industry_other: "",
     company_website: "",
     contact_name: "",
-    contact_role: "",
     contact_email: "",
     project_title: "",
-    project_summary_short: "",
-    project_description_detailed: "",
-    problem_statement: "",
+    project_summary: "",
+    project_description: "",
     expected_outcomes: [""],
     deliverables: [""],
     success_criteria: [""],
     scope_clarity: "",
+    scope_clarity_other: "",
     required_skills: [],
+    required_skills_other: "",
     technical_domains: [],
-    weekly_time_commitment: "",
-    confidentiality_requirements: "",
+    technical_domains_other: "",
     data_access: "",
     project_sector: "",
+    project_sector_other: "",
     supplementary_documents: [],
     video_links: [""],
   });
@@ -153,6 +160,9 @@ function ClientInfo() {
       if (!form.company_industry) {
         e.company_industry = "Required";
       }
+      if (form.company_industry === OTHER_OPTION && !form.company_industry_other.trim()) {
+        e.company_industry_other = "Please specify the industry";
+      }
       if (
         form.company_website &&
         !/^https?:\/\/.+\..+/.test(form.company_website)
@@ -164,9 +174,6 @@ function ClientInfo() {
     if (pageIdx === 1) {
       if (!form.contact_name || form.contact_name.length > 100) {
         e.contact_name = "Required, max 100 chars";
-      }
-      if (!form.contact_role || form.contact_role.length > 100) {
-        e.contact_role = "Required, max 100 chars";
       }
       if (
         !form.contact_email ||
@@ -180,14 +187,14 @@ function ClientInfo() {
       if (!form.project_title || form.project_title.length > 150) {
         e.project_title = "Required, max 150 chars";
       }
-      if (form.project_summary_short.length > 300) {
-        e.project_summary_short = "Max 300 chars";
+      if (form.project_summary.length > 300) {
+        e.project_summary = "Max 300 chars";
       }
       if (
-        !form.project_description_detailed ||
-        form.project_description_detailed.length > 5000
+        !form.project_description ||
+        form.project_description.length > 5000
       ) {
-        e.project_description_detailed = "Required, max 5000 chars";
+        e.project_description = "Required, max 5000 chars";
       }
       if (
         form.expected_outcomes.filter((x) => x.trim()).length < 1 ||
@@ -201,11 +208,11 @@ function ClientInfo() {
       ) {
         e.deliverables = "1–10 required";
       }
-      if (form.success_criteria.filter((x) => x.trim()).length < 1) {
-        e.success_criteria = "At least 1 required";
-      }
       if (!form.scope_clarity) {
         e.scope_clarity = "Required";
+      }
+      if (form.scope_clarity === OTHER_OPTION && !form.scope_clarity_other.trim()) {
+        e.scope_clarity_other = "Please specify";
       }
     }
 
@@ -216,31 +223,36 @@ function ClientInfo() {
       // }
     }
 
-    if (pageIdx === 4) {
-      const hours = Number(form.weekly_time_commitment);
-      if (!hours || hours < 1 || hours > 15) {
-        e.weekly_time_commitment = "1–15 required";
+    if (pageIdx === 3) {
+      if (!form.project_sector) {
+        e.project_sector = "Required";
       }
-      if (!form.confidentiality_requirements) {
-        e.confidentiality_requirements = "Required";
+      if (form.project_sector === OTHER_OPTION && !form.project_sector_other.trim()) {
+        e.project_sector_other = "Please specify the sector";
       }
       if (!form.data_access) {
         e.data_access = "Required";
       }
-    }
-
-    if (pageIdx === 5) {
-      if (!form.project_sector) {
-        e.project_sector = "Required";
+      if (
+        form.required_skills.includes(OTHER_OPTION) &&
+        !form.required_skills_other.trim()
+      ) {
+        e.required_skills_other = "Please specify the skill";
+      }
+      if (
+        form.technical_domains.includes(OTHER_OPTION) &&
+        !form.technical_domains_other.trim()
+      ) {
+        e.technical_domains_other = "Please specify the domain";
       }
     }
 
-    if (pageIdx === 6) {
+    if (pageIdx === 4) {
       if (form.supplementary_documents.length > 3) {
         e.supplementary_documents = "Max 3 files";
       }
       if (
-        form.supplementary_documents.some((f) => f.size > 5 * 1024 * 1024)
+        form.supplementary_documents.some((f) => f.size > 5* 1024* 1024)
       ) {
         e.supplementary_documents = "Max 5MB per file";
       }
@@ -279,9 +291,29 @@ function ClientInfo() {
       }
     }
 
+    const normalizedSkills = form.required_skills
+      .filter((v) => v !== OTHER_OPTION)
+      .concat(form.required_skills_other.trim() ? [form.required_skills_other.trim()] : []);
+    const normalizedDomains = form.technical_domains
+      .filter((v) => v !== OTHER_OPTION)
+      .concat(form.technical_domains_other.trim() ? [form.technical_domains_other.trim()] : []);
+
     const payload = {
       ...form,
-      weekly_time_commitment: Number(form.weekly_time_commitment || 0),
+      company_industry:
+        form.company_industry === OTHER_OPTION
+          ? form.company_industry_other.trim()
+          : form.company_industry,
+      project_sector:
+        form.project_sector === OTHER_OPTION
+          ? form.project_sector_other.trim()
+          : form.project_sector,
+      scope_clarity:
+        form.scope_clarity === OTHER_OPTION
+          ? form.scope_clarity_other.trim()
+          : form.scope_clarity,
+      required_skills: normalizedSkills,
+      technical_domains: normalizedDomains,
       expected_outcomes: form.expected_outcomes
         .map((v) => v.trim())
         .filter(Boolean),
@@ -307,7 +339,7 @@ function ClientInfo() {
     <>
       <h2 className="section-title">1. Corporate Entity Details</h2>
 
-      <label className="label">Company Name *</label>
+      <label className="label">Company Name*</label>
       <input
         name="company_name"
         value={form.company_name}
@@ -319,7 +351,7 @@ function ClientInfo() {
         <div className="error-text">{errors.company_name}</div>
       )}
 
-      <label className="label">Company Industry *</label>
+      <label className="label">Company Industry*</label>
       <select
         name="company_industry"
         value={form.company_industry}
@@ -332,9 +364,24 @@ function ClientInfo() {
             {i}
           </option>
         ))}
+        <option value={OTHER_OPTION}>Other</option>
       </select>
       {errors.company_industry && (
         <div className="error-text">{errors.company_industry}</div>
+      )}
+      {form.company_industry === OTHER_OPTION && (
+        <>
+          <input
+            name="company_industry_other"
+            value={form.company_industry_other}
+            onChange={handleChange}
+            placeholder="Enter industry"
+            className="input-base mt-2"
+          />
+          {errors.company_industry_other && (
+            <div className="error-text">{errors.company_industry_other}</div>
+          )}
+        </>
       )}
 
       <label className="label">Company Website</label>
@@ -353,7 +400,7 @@ function ClientInfo() {
     <>
       <h2 className="section-title">2. Primary Point of Contact</h2>
 
-      <label className="label">Contact Name *</label>
+      <label className="label">Contact Name*</label>
       <input
         name="contact_name"
         value={form.contact_name}
@@ -365,19 +412,7 @@ function ClientInfo() {
         <div className="error-text">{errors.contact_name}</div>
       )}
 
-      <label className="label">Contact Role *</label>
-      <input
-        name="contact_role"
-        value={form.contact_role}
-        onChange={handleChange}
-        maxLength={100}
-        className="input-base"
-      />
-      {errors.contact_role && (
-        <div className="error-text">{errors.contact_role}</div>
-      )}
-
-      <label className="label">Contact Email *</label>
+      <label className="label">Contact Email*</label>
       <input
         name="contact_email"
         value={form.contact_email}
@@ -393,7 +428,7 @@ function ClientInfo() {
     <>
       <h2 className="section-title">3. Project Specification</h2>
 
-      <label className="label">Project Title *</label>
+      <label className="label">Project Title*</label>
       <input
         name="project_title"
         value={form.project_title}
@@ -405,41 +440,40 @@ function ClientInfo() {
         <div className="error-text">{errors.project_title}</div>
       )}
 
-      <label className="label">Project Summary (Short, max 300 chars)</label>
+      <label className="label">Project Summary</label>
       <textarea
-        name="project_summary_short"
-        value={form.project_summary_short}
+        name="project_summary"
+        value={form.project_summary}
         onChange={handleChange}
         maxLength={300}
         className="textarea-base"
       />
-      {errors.project_summary_short && (
-        <div className="error-text">{errors.project_summary_short}</div>
+      <div
+        className={
+          form.project_summary.length > 300
+            ? "text-sm text-red-700"
+            : "text-sm text-slate-500"
+        }
+      >
+        {form.project_summary.length}/300
+      </div>
+      {errors.project_summary && (
+        <div className="error-text">{errors.project_summary}</div>
       )}
 
-      <label className="label">Project Description (Detailed) *</label>
+      <label className="label">Project Description*</label>
       <textarea
-        name="project_description_detailed"
-        value={form.project_description_detailed}
+        name="project_description"
+        value={form.project_description}
         onChange={handleChange}
         maxLength={5000}
         className="textarea-base"
       />
-      {errors.project_description_detailed && (
-        <div className="error-text">
-          {errors.project_description_detailed}
-        </div>
+      {errors.project_description && (
+        <div className="error-text">{errors.project_description}</div>
       )}
 
-      <label className="label">Problem Statement</label>
-      <textarea
-        name="problem_statement"
-        value={form.problem_statement}
-        onChange={handleChange}
-        className="textarea-base"
-      />
-
-      <label className="label">Expected Outcomes (1–5)</label>
+      <label className="label">Expected Outcomes*</label>
       {form.expected_outcomes.map((v, i) => (
         <div key={i} className="flex gap-2 mb-2">
           <input
@@ -474,7 +508,7 @@ function ClientInfo() {
         <div className="error-text">{errors.expected_outcomes}</div>
       )}
 
-      <label className="label">Deliverables (1–10)</label>
+      <label className="label">Deliverables*</label>
       {form.deliverables.map((v, i) => (
         <div key={i} className="flex gap-2 mb-2">
           <input
@@ -507,7 +541,7 @@ function ClientInfo() {
         <div className="error-text">{errors.deliverables}</div>
       )}
 
-      <label className="label">Success Criteria (min 1)</label>
+      <label className="label">Success Criteria</label>
       {form.success_criteria.map((v, i) => (
         <div key={i} className="flex gap-2 mb-2">
           <input
@@ -542,7 +576,7 @@ function ClientInfo() {
       )}
 
       <label className="label">
-        Is it exploratory or more well defined?
+        Would you characterise your project as well defined with specific steps, or as exploratory with open ended goals?
       </label>
       <select
         name="scope_clarity"
@@ -556,9 +590,24 @@ function ClientInfo() {
             {s}
           </option>
         ))}
+        <option value={OTHER_OPTION}>Other</option>
       </select>
       {errors.scope_clarity && (
         <div className="error-text">{errors.scope_clarity}</div>
+      )}
+      {form.scope_clarity === OTHER_OPTION && (
+        <>
+          <input
+            name="scope_clarity_other"
+            value={form.scope_clarity_other}
+            onChange={handleChange}
+            placeholder="Describe project scope"
+            className="input-base mt-2"
+          />
+          {errors.scope_clarity_other && (
+            <div className="error-text">{errors.scope_clarity_other}</div>
+          )}
+        </>
       )}
     </>,
 
@@ -571,79 +620,26 @@ function ClientInfo() {
         value={form.required_skills}
         onChange={(v) => setForm((f) => ({ ...f, required_skills: v }))}
         label="Required Skills"
+        otherValue={form.required_skills_other}
+        onOtherChange={(v) => setForm((f) => ({ ...f, required_skills_other: v }))}
       />
+      {errors.required_skills_other && (
+        <div className="error-text">{errors.required_skills_other}</div>
+      )}
 
       <MultiSelect
         options={TECH_DOMAINS}
         value={form.technical_domains}
         onChange={(v) => setForm((f) => ({ ...f, technical_domains: v }))}
         label="Technical Domains"
+        otherValue={form.technical_domains_other}
+        onOtherChange={(v) => setForm((f) => ({ ...f, technical_domains_other: v }))}
       />
-
-      {errors.required_skills && (
-        <div className="error-text">{errors.required_skills}</div>
-      )}
-    </>,
-
-    // 4: Project Management and Logistics
-    <>
-      <h2 className="section-title">5. Project Management and Logistics</h2>
-
-      <label className="label">
-        Weekly Time Commitment (hours, 1–15) *
-      </label>
-      <input
-        type="number"
-        name="weekly_time_commitment"
-        value={form.weekly_time_commitment}
-        onChange={handleChange}
-        min={1}
-        max={15}
-        className="input-base"
-      />
-      {errors.weekly_time_commitment && (
-        <div className="error-text">
-          {errors.weekly_time_commitment}
-        </div>
+      {errors.technical_domains_other && (
+        <div className="error-text">{errors.technical_domains_other}</div>
       )}
 
-      <label className="label">Confidentiality Requirements *</label>
-      <select
-        name="confidentiality_requirements"
-        value={form.confidentiality_requirements}
-        onChange={handleChange}
-        className="select-base"
-      >
-        <option value="">Select...</option>
-        {CONFIDENTIALITY.map((c) => (
-          <option key={c} value={c}>
-            {c}
-          </option>
-        ))}
-      </select>
-      {errors.confidentiality_requirements && (
-        <div className="error-text">
-          {errors.confidentiality_requirements}
-        </div>
-      )}
-
-      <label className="label">Data Access *</label>
-      <textarea
-        name="data_access"
-        value={form.data_access}
-        onChange={handleChange}
-        className="textarea-base"
-      />
-      {errors.data_access && (
-        <div className="error-text">{errors.data_access}</div>
-      )}
-    </>,
-
-    // 5: Sectoral Classification
-    <>
-      <h2 className="section-title">6. Sectoral Classification</h2>
-
-      <label className="label">Project Sector *</label>
+      <label className="label">Project Sector (Industry Domain)*</label>
       <select
         name="project_sector"
         value={form.project_sector}
@@ -656,19 +652,58 @@ function ClientInfo() {
             {s}
           </option>
         ))}
+        <option value={OTHER_OPTION}>Other</option>
       </select>
       {errors.project_sector && (
         <div className="error-text">{errors.project_sector}</div>
       )}
+      {form.project_sector === OTHER_OPTION && (
+        <>
+          <input
+            name="project_sector_other"
+            value={form.project_sector_other}
+            onChange={handleChange}
+            placeholder="Enter sector"
+            className="input-base mt-2"
+          />
+          {errors.project_sector_other && (
+            <div className="error-text">{errors.project_sector_other}</div>
+          )}
+        </>
+      )}
+
+      <label className="label">Data Access*</label>
+      <textarea
+        name="data_access"
+        value={form.data_access}
+        onChange={handleChange}
+        className="textarea-base"
+        placeholder="Describe data assets, access methodology, and restrictions"
+      />
+      {errors.data_access && (
+        <div className="error-text">{errors.data_access}</div>
+      )}
+
+      {errors.required_skills && (
+        <div className="error-text">{errors.required_skills}</div>
+      )}
     </>,
 
-    // 6: Supplementary Materials
+    // 4: Supplementary Materials
     <>
-      <h2 className="section-title">7. Supplementary Materials</h2>
+      <h2 className="section-title">5. Supplementary Materials</h2>
 
-      <label className="label">
-        Supplementary Documents (max 3, 5MB each, PDF/DOC/PPT)
-      </label>
+      <label className="label">Supplementary Documents</label>
+      <p className="muted">
+        You may upload any supporting materials that help our student team understand your
+        project more effectively. Examples include PDFs, specification documents,
+        presentations, data samples, or background briefs. Sharing these materials gives the
+        team a clearer view of your goals, expected outcomes, and any existing work. This
+        allows the students to prepare more thoroughly, ask better questions during the
+        kickoff, and begin the engagement with a stronger foundation. Permitted formats
+        include PDF, document files, and presentation files. You may upload up to three files,
+        each up to five megabytes.
+      </p>
       <input
         type="file"
         name="supplementary_documents"
@@ -683,9 +718,15 @@ function ClientInfo() {
         </div>
       )}
 
-      <label className="label">
-        Intro or Relevant Video Links (optional)
-      </label>
+      <label className="label">Introductory or Relevant Videos (Optional)</label>
+      <p className="muted">
+        You may share an optional link to an introductory video, a short overview of your
+        organisation, or any relevant demonstration. A brief video often conveys context that
+        is difficult to capture in text, and it helps the team understand your mission, your
+        users, and the problem space. This enables the team to align more quickly with your
+        vision and accelerates the early discovery process. Please ensure that the link is a
+        valid URL.
+      </p>
       {form.video_links.map((v, i) => (
         <div key={i} className="flex gap-2 mb-2">
           <input
@@ -740,7 +781,7 @@ function ClientInfo() {
             <div
               className="h-full bg-duke-700 transition-all"
               style={{
-                width: `${((page + 1) / pages.length) * 100}%`,
+                width: `${((page + 1) / pages.length)* 100}%`,
               }}
             />
           </div>
