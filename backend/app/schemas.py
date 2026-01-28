@@ -15,12 +15,6 @@ class CompanyIndustry(str, Enum):
     manufacturing = "Manufacturing"
 
 
-class ConfidentialityRequirement(str, Enum):
-    none = "None"
-    nda = "Non-Disclosure Agreement (NDA) required"
-    ip = "Intellectual Property (IP) agreement required"
-
-
 class ProjectSector(str, Enum):
     healthcare = "Healthcare"
     finance = "Finance"
@@ -30,7 +24,7 @@ class ProjectSector(str, Enum):
 
 
 class ScopeClarity(str, Enum):
-    fully_defined = "fully defined"
+    well_defined = "well defined"
     partially_defined = "partially defined"
     exploratory = "exploratory"
 
@@ -41,23 +35,18 @@ class IntakeForm(BaseModel):
     company_website: Optional[HttpUrl] = None
 
     contact_name: str = Field(..., max_length=100)
-    contact_role: str = Field(..., max_length=100)
     contact_email: str
 
     project_title: str = Field(..., max_length=150)
-    project_summary_short: Optional[str] = Field(default=None, max_length=300)
-    project_description_detailed: str = Field(..., max_length=5000)
-    problem_statement: Optional[str] = None
+    project_summary: Optional[str] = Field(default=None, max_length=300)
+    project_description: str = Field(..., max_length=5000)
     expected_outcomes: List[str] = Field(..., min_items=1, max_items=5)
     deliverables: List[str] = Field(..., min_items=1, max_items=10)
-    success_criteria: List[str] = Field(..., min_items=1)
+    success_criteria: Optional[List[str]] = None
     scope_clarity: ScopeClarity
 
     required_skills: List[str] = Field(default_factory=list)
     technical_domains: List[str] = Field(default_factory=list)
-
-    weekly_time_commitment: int = Field(..., ge=1, le=15)
-    confidentiality_requirements: ConfidentialityRequirement
     data_access: str
 
     project_sector: ProjectSector
