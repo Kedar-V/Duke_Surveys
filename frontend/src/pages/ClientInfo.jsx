@@ -95,18 +95,20 @@ const SKILLS = [
 const SCOPE = ["well defined", "partially defined", "exploratory"];
 const OTHER_OPTION = "__other__";
 
-function SingleSelect({ options, value, onChange, label, otherValue, onOtherChange }) {
-  const showOther = value === OTHER_OPTION;
+function MultiSelect({ options, value, onChange, label, otherValue, onOtherChange }) {
+  const showOther = value.includes(OTHER_OPTION);
 
   return (
     <div className="mb-4">
       <label className="label">{label}</label>
       <select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) =>
+          onChange(Array.from(e.target.selectedOptions, (opt) => opt.value))
+        }
         className="select-base"
+        multiple
       >
-        <option value="">Select...</option>
         {options.map((opt) => (
           <option key={opt} value={opt}>
             {opt}
@@ -142,9 +144,9 @@ function ClientInfo() {
     success_criteria: [""],
     scope_clarity: "",
     scope_clarity_other: "",
-    required_skills: "",
+    required_skills: [],
     required_skills_other: "",
-    technical_domains: "",
+    technical_domains: [],
     technical_domains_other: "",
     data_access: "",
     project_sector: "",
@@ -281,10 +283,10 @@ function ClientInfo() {
       if (!form.data_access) {
         e.data_access = "Required";
       }
-      if (form.required_skills === OTHER_OPTION && !form.required_skills_other.trim()) {
+      if (form.required_skills.includes(OTHER_OPTION) && !form.required_skills_other.trim()) {
         e.required_skills_other = "Please specify the skill";
       }
-      if (form.technical_domains === OTHER_OPTION && !form.technical_domains_other.trim()) {
+      if (form.technical_domains.includes(OTHER_OPTION) && !form.technical_domains_other.trim()) {
         e.technical_domains_other = "Please specify the domain";
       }
     }
@@ -325,14 +327,20 @@ function ClientInfo() {
       }
     }
 
-    const normalizedSkills =
-      form.required_skills === OTHER_OPTION
-        ? (form.required_skills_other.trim() ? [form.required_skills_other.trim()] : [])
-        : (form.required_skills ? [form.required_skills] : []);
-    const normalizedDomains =
-      form.technical_domains === OTHER_OPTION
-        ? (form.technical_domains_other.trim() ? [form.technical_domains_other.trim()] : [])
-        : (form.technical_domains ? [form.technical_domains] : []);
+    const normalizedSkills = form.required_skills
+      .filter((v) => v !== OTHER_OPTION)
+      .concat(
+        form.required_skills.includes(OTHER_OPTION) && form.required_skills_other.trim()
+          ? [form.required_skills_other.trim()]
+          : []
+      );
+    const normalizedDomains = form.technical_domains
+      .filter((v) => v !== OTHER_OPTION)
+      .concat(
+        form.technical_domains.includes(OTHER_OPTION) && form.technical_domains_other.trim()
+          ? [form.technical_domains_other.trim()]
+          : []
+      );
 
     const payload = {
       ...form,
@@ -642,7 +650,7 @@ function ClientInfo() {
     <>
       <h2 className="section-title">4. Required Competencies and Technologies</h2>
 
-      <SingleSelect
+      <MultiSelect
         options={SKILLS}
         value={form.required_skills}
         onChange={(v) => setForm((f) => ({ ...f, required_skills: v }))}
@@ -654,7 +662,7 @@ function ClientInfo() {
         <div className="error-text">{errors.required_skills_other}</div>
       )}
 
-      <SingleSelect
+      <MultiSelect
         options={TECH_DOMAINS}
         value={form.technical_domains}
         onChange={(v) => setForm((f) => ({ ...f, technical_domains: v }))}
@@ -790,10 +798,14 @@ function ClientInfo() {
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-10 relative">
-      <div className="absolute top-4 left-4">
-        <img src="/assets/dukelogo.png" alt="Duke University" className="h-28 w-auto" />
+      <div className="absolute top-2 left-2 sm:top-4 sm:left-4">
+        <img
+          src="/assets/dukelogo.png"
+          alt="Duke University"
+          className="h-[clamp(3.25rem,8vw,8rem)] w-auto max-w-[45vw]"
+        />
       </div>
-      <div className="card max-w-3xl mx-auto p-8">
+      <div className="card max-w-3xl mx-auto p-8 mt-10 sm:mt-2">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-heading text-duke-900">

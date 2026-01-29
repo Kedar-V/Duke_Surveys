@@ -19,10 +19,12 @@ services:
       - "8000:8000"
     volumes:
       - ./backend/app:/app/app
+      - ./frontend/src/data:/app/frontend_data:ro
     environment:
       PYTHONUNBUFFERED: "1"
       MONGO_URL: "mongodb://mongodb:27017"
       MONGO_DB: "surveydb"
+      FRONTEND_DATA_PATH: "/app/frontend_data/projectsCatalog.js"
     depends_on:
       mongodb:
         condition: service_healthy
