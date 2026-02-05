@@ -1,18 +1,4 @@
 services:
-  mongodb:
-    image: mongo:7
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_DATABASE: surveydb
-    volumes:
-      - mongodata:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
   backend:
     build: ./backend
     ports:
@@ -22,12 +8,13 @@ services:
       - ./frontend/src/data:/app/frontend_data:ro
     environment:
       PYTHONUNBUFFERED: "1"
-      MONGO_URL: "mongodb://mongodb:27017"
-      MONGO_DB: "surveydb"
+      MONGO_URL: ${MONGO_URL}
+      MONGO_DB: ${MONGO_DB:-surveydb}
+      MONGO_TLS: ${MONGO_TLS:-false}
+      MONGO_TLS_CA_FILE: ${MONGO_TLS_CA_FILE:-/app/certs/global-bundle.pem}
+      MONGO_TLS_ALLOW_INVALID_HOSTNAMES: ${MONGO_TLS_ALLOW_INVALID_HOSTNAMES:-false}
+      MONGO_RETRY_WRITES: ${MONGO_RETRY_WRITES:-false}
       FRONTEND_DATA_PATH: "/app/frontend_data/projectsCatalog.js"
-    depends_on:
-      mongodb:
-        condition: service_healthy
 
   frontend:
     build: ./frontend
@@ -40,5 +27,3 @@ services:
     depends_on:
       - backend
 
-volumes:
-  mongodata:
