@@ -575,7 +575,7 @@ function ClientInfo() {
       )}
 
       <label className="label">
-        Stretch goals that modestly exceed baseline expectations while remaining feasible (optional)
+        Stretch goals that modestly exceed baseline expectations while remaining feasible
       </label>
       <textarea
         name="stretch_goals"
@@ -589,8 +589,7 @@ function ClientInfo() {
       )}
 
       <label className="label">
-        Significant contributions that extend beyond the project scope to drive long-term
-        innovation and impact
+        Significant contributions that extend beyond the project scope to drive long-term innovation and impact
       </label>
       <textarea
         name="long_term_impact"
