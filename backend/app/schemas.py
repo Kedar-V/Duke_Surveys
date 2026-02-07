@@ -23,7 +23,7 @@ class IntakeForm(BaseModel):
     project_summary: Optional[str] = Field(default=None, max_length=300)
     project_description: str = Field(..., max_length=5000)
     minimum_deliverables: str = Field(..., min_length=1)
-    stretch_goals: str = Field(..., min_length=1)
+    stretch_goals: Optional[str] = None
     long_term_impact: Optional[str] = None
     scope_clarity: ScopeClarity
     publication_potential: str = Field(..., min_length=1)

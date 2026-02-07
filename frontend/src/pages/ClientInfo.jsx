@@ -284,8 +284,8 @@ function ClientInfo() {
         .split("\n")
         .map((v) => v.trim())
         .filter(Boolean);
-      if (parsedDeliverables.length < 1 || parsedDeliverables.length > 10) {
-        e.stretch_goals = "Required";
+      if (parsedDeliverables.length > 10) {
+        e.stretch_goals = "Max 10 items";
       }
       const parsedSuccessCriteria = form.long_term_impact
         .split("\n")
@@ -575,7 +575,7 @@ function ClientInfo() {
       )}
 
       <label className="label">
-        Stretch goals that modestly exceed baseline expectations while remaining feasible*
+        Stretch goals that modestly exceed baseline expectations while remaining feasible (optional)
       </label>
       <textarea
         name="stretch_goals"
