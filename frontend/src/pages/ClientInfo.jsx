@@ -598,7 +598,7 @@ function ClientInfo() {
       )}
 
       <label className="label">
-        Publication Potential: Indicate whether the project is intended to lead to a publication (and it is completely fine if it is not).
+        Publication Potential: Kindly specify whether this project is anticipated to lead to a research publication. There is no expectation or requirement for such an outcome.
       </label>
       <select
         name="publication_potential"
