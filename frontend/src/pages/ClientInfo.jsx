@@ -886,7 +886,14 @@ function ClientInfo() {
                 className="btn-primary"
                 disabled={submitting}
               >
-                {submitting ? "Submitting..." : "Submit"}
+                {submitting ? (
+                  <span className="flex items-center gap-2">
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Submitting...
+                  </span>
+                ) : (
+                  "Submit"
+                )}
               </button>
             )}
           </div>
