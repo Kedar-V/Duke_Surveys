@@ -185,7 +185,7 @@ def create_client_intake(payload: IntakeForm):
 @app.post("/client-intake/upload")
 def create_client_intake_upload(
     payload: str = Form(...),
-    documents: list[UploadFile] | None = File(None),
+    documents: UploadFile | list[UploadFile] | None = File(None),
 ):
     try:
         payload_dict = json.loads(payload)
@@ -193,7 +193,12 @@ def create_client_intake_upload(
         raise HTTPException(400, "Invalid payload JSON") from exc
 
     intake = IntakeForm.model_validate(payload_dict)
-    urls = upload_documents(documents or [])
+    if isinstance(documents, UploadFile):
+        document_list = [documents]
+    else:
+        document_list = documents or []
+
+    urls = upload_documents(document_list)
     intake_payload = intake.model_dump(mode="json")
     if urls:
         intake_payload["supplementary_documents"] = urls
