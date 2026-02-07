@@ -134,6 +134,7 @@ def save_intake_form(payload: dict) -> str:
     db = get_mongo()
     now = utcnow()
     doc = {
+        "raw": payload,
         "company": {
             "name": payload.get("company_name"),
             "industry": payload.get("company_industry"),
@@ -169,4 +170,6 @@ def save_intake_form(payload: dict) -> str:
         },
     }
     res = db.client_intake_forms.insert_one(doc)
+    if not res.acknowledged:
+        raise RuntimeError("DocumentDB insert was not acknowledged")
     return str(res.inserted_id)

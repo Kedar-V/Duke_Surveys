@@ -5,24 +5,6 @@ from pydantic import BaseModel, Field, HttpUrl
 from enum import Enum
 
 
-class CompanyIndustry(str, Enum):
-    finance = "Finance"
-    healthcare = "Healthcare"
-    retail = "Retail"
-    climate = "Climate"
-    social_impact = "Social Impact"
-    education = "Education"
-    manufacturing = "Manufacturing"
-
-
-class ProjectSector(str, Enum):
-    healthcare = "Healthcare"
-    finance = "Finance"
-    retail = "Retail"
-    climate = "Climate"
-    public_sector = "Public Sector"
-
-
 class ScopeClarity(str, Enum):
     well_defined = "well defined"
     partially_defined = "partially defined"
@@ -31,7 +13,7 @@ class ScopeClarity(str, Enum):
 
 class IntakeForm(BaseModel):
     company_name: str = Field(..., max_length=200)
-    company_industry: CompanyIndustry
+    company_industry: str
     company_website: Optional[HttpUrl] = None
 
     contact_name: str = Field(..., max_length=100)
@@ -49,7 +31,7 @@ class IntakeForm(BaseModel):
     technical_domains: List[str] = Field(default_factory=list)
     data_access: str
 
-    project_sector: ProjectSector
+    project_sector: str
 
     supplementary_documents: List[str] = Field(default_factory=list)
     video_links: List[HttpUrl] = Field(default_factory=list)
