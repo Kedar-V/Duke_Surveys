@@ -139,9 +139,9 @@ function ClientInfo() {
     project_title: "",
     project_summary: "",
     project_description: "",
-    expected_outcomes: [""],
-    deliverables: [""],
-    success_criteria: [""],
+    minimum_deliverables: "",
+    stretch_goals: "",
+    long_term_impact: "",
     scope_clarity: "",
     scope_clarity_other: "",
     publication_potential: "",
@@ -250,17 +250,26 @@ function ClientInfo() {
       ) {
         e.project_description = "Required, max 5000 chars";
       }
-      if (
-        form.expected_outcomes.filter((x) => x.trim()).length < 1 ||
-        form.expected_outcomes.length > 5
-      ) {
-        e.expected_outcomes = "1–5 required";
+      const parsedOutcomes = form.minimum_deliverables
+        .split("\n")
+        .map((v) => v.trim())
+        .filter(Boolean);
+      if (parsedOutcomes.length < 1 || parsedOutcomes.length > 5) {
+        e.minimum_deliverables = "1–5 required";
       }
-      if (
-        form.deliverables.filter((x) => x.trim()).length < 1 ||
-        form.deliverables.length > 10
-      ) {
-        e.deliverables = "1–10 required";
+      const parsedDeliverables = form.stretch_goals
+        .split("\n")
+        .map((v) => v.trim())
+        .filter(Boolean);
+      if (parsedDeliverables.length < 1 || parsedDeliverables.length > 10) {
+        e.stretch_goals = "1–10 required";
+      }
+      const parsedSuccessCriteria = form.long_term_impact
+        .split("\n")
+        .map((v) => v.trim())
+        .filter(Boolean);
+      if (parsedSuccessCriteria.length < 1 || parsedSuccessCriteria.length > 10) {
+        e.long_term_impact = "1–10 required";
       }
       if (!form.scope_clarity) {
         e.scope_clarity = "Required";
@@ -357,13 +366,9 @@ function ClientInfo() {
       publication_potential: form.publication_potential,
       required_skills: normalizedSkills,
       technical_domains: normalizedDomains,
-      expected_outcomes: form.expected_outcomes
-        .map((v) => v.trim())
-        .filter(Boolean),
-      deliverables: form.deliverables.map((v) => v.trim()).filter(Boolean),
-      success_criteria: form.success_criteria
-        .map((v) => v.trim())
-        .filter(Boolean),
+      minimum_deliverables: form.minimum_deliverables,
+      stretch_goals: form.stretch_goals,
+      long_term_impact: form.long_term_impact,
       supplementary_documents: form.supplementary_documents.map((f) => f.name),
       video_links: form.video_links.map((v) => v.trim()).filter(Boolean),
     };
@@ -532,106 +537,44 @@ function ClientInfo() {
       )}
 
       <label className="label">Minimum Achievable deliverables within timeline*</label>
-      {form.expected_outcomes.map((v, i) => (
-        <div key={i} className="flex gap-2 mb-2">
-          <input
-            value={v}
-            onChange={(e) =>
-              handleListChange("expected_outcomes", i, e.target.value)
-            }
-            className="input-base"
-          />
-          {form.expected_outcomes.length > 1 && (
-            <button
-              type="button"
-              onClick={() =>
-                removeListItem("expected_outcomes", i, 1)
-              }
-            >
-              -
-            </button>
-          )}
-          {form.expected_outcomes.length < 5 &&
-            i === form.expected_outcomes.length - 1 && (
-              <button
-                type="button"
-                onClick={() => addListItem("expected_outcomes", 5)}
-              >
-                +
-              </button>
-            )}
-        </div>
-      ))}
-      {errors.expected_outcomes && (
-        <div className="error-text">{errors.expected_outcomes}</div>
+      <textarea
+        name="minimum_deliverables"
+        value={form.minimum_deliverables}
+        onChange={handleChange}
+        className="textarea-base"
+        placeholder="Enter one item per line"
+      />
+      {errors.minimum_deliverables && (
+        <div className="error-text">{errors.minimum_deliverables}</div>
       )}
 
-      <label className="label">Stretch goals that modestly exceed baseline expectations while remaining feasible*</label>
-      {form.deliverables.map((v, i) => (
-        <div key={i} className="flex gap-2 mb-2">
-          <input
-            value={v}
-            onChange={(e) =>
-              handleListChange("deliverables", i, e.target.value)
-            }
-            className="input-base"
-          />
-          {form.deliverables.length > 1 && (
-            <button
-              type="button"
-              onClick={() => removeListItem("deliverables", i, 1)}
-            >
-              -
-            </button>
-          )}
-          {form.deliverables.length < 10 &&
-            i === form.deliverables.length - 1 && (
-              <button
-                type="button"
-                onClick={() => addListItem("deliverables", 10)}
-              >
-                +
-              </button>
-            )}
-        </div>
-      ))}
-      {errors.deliverables && (
-        <div className="error-text">{errors.deliverables}</div>
+      <label className="label">
+        Stretch goals that modestly exceed baseline expectations while remaining feasible*
+      </label>
+      <textarea
+        name="stretch_goals"
+        value={form.stretch_goals}
+        onChange={handleChange}
+        className="textarea-base"
+        placeholder="Enter one item per line"
+      />
+      {errors.stretch_goals && (
+        <div className="error-text">{errors.stretch_goals}</div>
       )}
 
-      <label className="label">Significant contributions that extend beyond the project scope to drive long-term innovation and impact
-</label>
-      {form.success_criteria.map((v, i) => (
-        <div key={i} className="flex gap-2 mb-2">
-          <input
-            value={v}
-            onChange={(e) =>
-              handleListChange("success_criteria", i, e.target.value)
-            }
-            className="input-base"
-          />
-          {form.success_criteria.length > 1 && (
-            <button
-              type="button"
-              onClick={() =>
-                removeListItem("success_criteria", i, 1)
-              }
-            >
-              -
-            </button>
-          )}
-          {i === form.success_criteria.length - 1 && (
-            <button
-              type="button"
-              onClick={() => addListItem("success_criteria", 10)}
-            >
-              +
-            </button>
-          )}
-        </div>
-      ))}
-      {errors.success_criteria && (
-        <div className="error-text">{errors.success_criteria}</div>
+      <label className="label">
+        Significant contributions that extend beyond the project scope to drive long-term
+        innovation and impact*
+      </label>
+      <textarea
+        name="long_term_impact"
+        value={form.long_term_impact}
+        onChange={handleChange}
+        className="textarea-base"
+        placeholder="Enter one item per line"
+      />
+      {errors.long_term_impact && (
+        <div className="error-text">{errors.long_term_impact}</div>
       )}
 
       <label className="label">
