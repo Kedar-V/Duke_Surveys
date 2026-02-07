@@ -144,6 +144,7 @@ function ClientInfo() {
     success_criteria: [""],
     scope_clarity: "",
     scope_clarity_other: "",
+    publication_potential: "",
     required_skills: [],
     required_skills_other: "",
     technical_domains: [],
@@ -353,6 +354,7 @@ function ClientInfo() {
           ? form.project_sector_other.trim()
           : form.project_sector,
       scope_clarity: form.scope_clarity,
+      publication_potential: form.publication_potential,
       required_skills: normalizedSkills,
       technical_domains: normalizedDomains,
       expected_outcomes: form.expected_outcomes
@@ -529,7 +531,7 @@ function ClientInfo() {
         <div className="error-text">{errors.project_description}</div>
       )}
 
-      <label className="label">Expected Outcomes*</label>
+      <label className="label">Minimum Achievable deliverables within timeline*</label>
       {form.expected_outcomes.map((v, i) => (
         <div key={i} className="flex gap-2 mb-2">
           <input
@@ -564,7 +566,7 @@ function ClientInfo() {
         <div className="error-text">{errors.expected_outcomes}</div>
       )}
 
-      <label className="label">Deliverables*</label>
+      <label className="label">Stretch goals that modestly exceed baseline expectations while remaining feasible*</label>
       {form.deliverables.map((v, i) => (
         <div key={i} className="flex gap-2 mb-2">
           <input
@@ -597,7 +599,8 @@ function ClientInfo() {
         <div className="error-text">{errors.deliverables}</div>
       )}
 
-      <label className="label">Success Criteria</label>
+      <label className="label">Significant contributions that extend beyond the project scope to drive long-term innovation and impact
+</label>
       {form.success_criteria.map((v, i) => (
         <div key={i} className="flex gap-2 mb-2">
           <input
@@ -650,6 +653,21 @@ function ClientInfo() {
       {errors.scope_clarity && (
         <div className="error-text">{errors.scope_clarity}</div>
       )}
+
+      <label className="label">
+        Publication Potential: Indicate whether the project is intended to lead to a publication (and it is completely fine if it is not).
+      </label>
+      <select
+        name="publication_potential"
+        value={form.publication_potential}
+        onChange={handleChange}
+        className="select-base"
+      >
+        <option value="">Select...</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+        <option value="unsure">Unsure</option>
+      </select>
     </>,
 
     // 3: Required Competencies & Technologies

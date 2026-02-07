@@ -26,6 +26,7 @@ class IntakeForm(BaseModel):
     deliverables: List[str] = Field(..., min_items=1, max_items=10)
     success_criteria: Optional[List[str]] = None
     scope_clarity: ScopeClarity
+    publication_potential: Optional[str] = None
 
     required_skills: List[str] = Field(default_factory=list)
     technical_domains: List[str] = Field(default_factory=list)

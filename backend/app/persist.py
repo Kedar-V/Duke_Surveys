@@ -154,6 +154,7 @@ def save_intake_form(payload: dict) -> str:
             "deliverables": payload.get("deliverables", []),
             "success_criteria": payload.get("success_criteria", []) or [],
             "scope_clarity": payload.get("scope_clarity"),
+            "publication_potential": payload.get("publication_potential"),
         },
         "competencies": {
             "required_skills": payload.get("required_skills", []),
