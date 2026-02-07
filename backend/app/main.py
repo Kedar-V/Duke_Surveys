@@ -15,6 +15,7 @@ from .persist import (
     mark_complete,
     mark_submitted,
     save_intake_form,
+    get_latest_intakes,
 )
 from .schemas import IntakeForm
 
@@ -177,6 +178,11 @@ def submit(session_id: str):
 def create_client_intake(payload: IntakeForm):
     intake_id = save_intake_form(payload.model_dump(mode="json"))
     return {"id": intake_id}
+
+
+@app.get("/client-intake/latest")
+def get_latest_client_intake(limit: int = 1):
+    return {"items": get_latest_intakes(limit=limit)}
 
 
 from .mongo import ping

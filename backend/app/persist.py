@@ -3,6 +3,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 import re
 
+from pymongo import DESCENDING
+
 from .mongo import get_mongo
 
 def utcnow():
@@ -173,3 +175,15 @@ def save_intake_form(payload: dict) -> str:
     if not res.acknowledged:
         raise RuntimeError("DocumentDB insert was not acknowledged")
     return str(res.inserted_id)
+
+
+def get_latest_intakes(limit: int = 1) -> list[dict]:
+    db = get_mongo()
+    docs = list(
+        db.client_intake_forms.find({})
+        .sort([("meta.created_at", DESCENDING), ("_id", DESCENDING)])
+        .limit(limit)
+    )
+    for d in docs:
+        d["id"] = str(d.pop("_id"))
+    return docs
