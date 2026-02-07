@@ -291,8 +291,8 @@ function ClientInfo() {
         .split("\n")
         .map((v) => v.trim())
         .filter(Boolean);
-      if (parsedSuccessCriteria.length < 1 || parsedSuccessCriteria.length > 10) {
-        e.long_term_impact = "1–10 required";
+      if (parsedSuccessCriteria.length > 10) {
+        e.long_term_impact = "Max 10 items";
       }
       if (!form.scope_clarity) {
         e.scope_clarity = "Required";
@@ -587,7 +587,7 @@ function ClientInfo() {
 
       <label className="label">
         Significant contributions that extend beyond the project scope to drive long-term
-        innovation and impact*
+        innovation and impact
       </label>
       <textarea
         name="long_term_impact"
@@ -818,11 +818,11 @@ function ClientInfo() {
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-10 relative">
-      <div className="absolute top-2 left-2 sm:top-4 sm:left-4">
+      <div className="absolute top-2 left-2 sm:top-4 sm:left-4 md:top-6 md:left-6">
         <img
           src="/assets/dukelogo.png"
           alt="Duke University"
-          className="h-[clamp(3.25rem,8vw,8rem)] w-auto max-w-[45vw]"
+          className="h-[clamp(2.5rem,12vw,6rem)] sm:h-[clamp(3.25rem,8vw,8rem)] md:h-[clamp(3.75rem,6vw,7.5rem)] w-auto max-w-[55vw] sm:max-w-[45vw] md:max-w-[35vw] object-contain"
         />
       </div>
       <div className="card max-w-3xl mx-auto p-8 mt-10 sm:mt-2">
