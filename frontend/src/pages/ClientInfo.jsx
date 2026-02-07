@@ -285,7 +285,7 @@ function ClientInfo() {
         .map((v) => v.trim())
         .filter(Boolean);
       if (parsedDeliverables.length < 1 || parsedDeliverables.length > 10) {
-        e.stretch_goals = "1–10 required";
+        e.stretch_goals = "required";
       }
       const parsedSuccessCriteria = form.long_term_impact
         .split("\n")
