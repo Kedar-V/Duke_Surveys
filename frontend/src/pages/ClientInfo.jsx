@@ -161,6 +161,7 @@ function ClientInfo() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [pendingSupplementaryFile, setPendingSupplementaryFile] = useState(null);
 
   // Generic change handler
   function handleChange(e) {
@@ -201,6 +202,28 @@ function ClientInfo() {
       arr.splice(idx, 1);
       return { ...f, [field]: arr };
     });
+  }
+
+  function handleSupplementaryFileChange(e) {
+    const file = e.target.files?.[0] || null;
+    setPendingSupplementaryFile(file);
+    e.target.value = "";
+  }
+
+  function addSupplementaryFile() {
+    if (!pendingSupplementaryFile) return;
+    setForm((f) => ({
+      ...f,
+      supplementary_documents: [...f.supplementary_documents, pendingSupplementaryFile],
+    }));
+    setPendingSupplementaryFile(null);
+  }
+
+  function removeSupplementaryFile(idx) {
+    setForm((f) => ({
+      ...f,
+      supplementary_documents: f.supplementary_documents.filter((_, i) => i !== idx),
+    }));
   }
 
   // Per-page validation
@@ -708,11 +731,41 @@ function ClientInfo() {
       <input
         type="file"
         name="supplementary_documents"
-        multiple
         accept=".pdf,.doc,.docx,.ppt,.pptx,.pptm,.odt,.odp,.xls,.xlsx,.csv,.txt"
-        onChange={handleChange}
+        onChange={handleSupplementaryFileChange}
         className="input-base"
       />
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={addSupplementaryFile}
+          disabled={!pendingSupplementaryFile}
+        >
+          Add file
+        </button>
+        {pendingSupplementaryFile && (
+          <span className="text-sm text-slate-600">
+            {pendingSupplementaryFile.name}
+          </span>
+        )}
+      </div>
+      {form.supplementary_documents.length > 0 && (
+        <ul className="space-y-2">
+          {form.supplementary_documents.map((file, idx) => (
+            <li key={`${file.name}-${idx}`} className="flex items-center gap-2">
+              <span className="text-sm text-slate-700">{file.name}</span>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => removeSupplementaryFile(idx)}
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       {errors.supplementary_documents && (
         <div className="error-text">
           {errors.supplementary_documents}
