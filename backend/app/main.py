@@ -4,7 +4,7 @@ import json
 from typing import Dict, Any
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from .engine import create_session, SESSIONS, materialise_plan, render_instance, next_instance
 from .data import list_teams, get_team
@@ -190,9 +190,16 @@ def create_client_intake_upload(
     try:
         payload_dict = json.loads(payload)
     except json.JSONDecodeError as exc:
-        raise HTTPException(400, "Invalid payload JSON") from exc
+        detail = {
+            "error": "Invalid payload JSON",
+            "payload_preview": payload[:200],
+        }
+        raise HTTPException(400, detail) from exc
 
-    intake = IntakeForm.model_validate(payload_dict)
+    try:
+        intake = IntakeForm.model_validate(payload_dict)
+    except ValidationError as exc:
+        raise HTTPException(422, exc.errors()) from exc
     if isinstance(documents, UploadFile):
         document_list = [documents]
     else:
