@@ -14,7 +14,10 @@ def _public_url(bucket: str, key: str, region: str) -> str:
     return f"https://{bucket}.s3.{region}.amazonaws.com/{key}"
 
 
-def upload_documents(files: Iterable[UploadFile]) -> list[str]:
+def upload_documents(files: Iterable[UploadFile] | UploadFile) -> list[str]:
+    if isinstance(files, UploadFile):
+        files = [files]
+
     files = [f for f in files if f and f.filename]
     if not files:
         return []
