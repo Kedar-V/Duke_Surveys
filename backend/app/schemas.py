@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import List, Optional
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, field_validator
 from enum import Enum
 
 
@@ -36,3 +36,12 @@ class IntakeForm(BaseModel):
 
     supplementary_documents: List[str] = Field(default_factory=list)
     video_links: List[HttpUrl] = Field(default_factory=list)
+
+    @field_validator("company_website", mode="before")
+    @classmethod
+    def empty_company_website_to_none(cls, value: object) -> object:
+        if value is None:
+            return None
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
