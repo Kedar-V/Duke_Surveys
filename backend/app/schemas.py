@@ -26,7 +26,7 @@ class IntakeForm(BaseModel):
     stretch_goals: str = Field(..., min_length=1)
     long_term_impact: Optional[str] = None
     scope_clarity: ScopeClarity
-    publication_potential: Optional[str] = None
+    publication_potential: str = Field(..., min_length=1)
 
     required_skills: List[str] = Field(default_factory=list)
     technical_domains: List[str] = Field(default_factory=list)

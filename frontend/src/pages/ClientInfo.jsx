@@ -278,14 +278,14 @@ function ClientInfo() {
         .map((v) => v.trim())
         .filter(Boolean);
       if (parsedOutcomes.length < 1 || parsedOutcomes.length > 5) {
-        e.minimum_deliverables = "1–5 required";
+        e.minimum_deliverables = "Required";
       }
       const parsedDeliverables = form.stretch_goals
         .split("\n")
         .map((v) => v.trim())
         .filter(Boolean);
       if (parsedDeliverables.length < 1 || parsedDeliverables.length > 10) {
-        e.stretch_goals = "required";
+        e.stretch_goals = "Required";
       }
       const parsedSuccessCriteria = form.long_term_impact
         .split("\n")
@@ -296,6 +296,9 @@ function ClientInfo() {
       }
       if (!form.scope_clarity) {
         e.scope_clarity = "Required";
+      }
+      if (!form.publication_potential) {
+        e.publication_potential = "Required";
       }
     }
 
@@ -565,7 +568,7 @@ function ClientInfo() {
         value={form.minimum_deliverables}
         onChange={handleChange}
         className="textarea-base"
-        placeholder="Enter one item per line"
+        placeholder="Enter"
       />
       {errors.minimum_deliverables && (
         <div className="error-text">{errors.minimum_deliverables}</div>
@@ -579,7 +582,7 @@ function ClientInfo() {
         value={form.stretch_goals}
         onChange={handleChange}
         className="textarea-base"
-        placeholder="Enter one item per line"
+        placeholder="Enter"
       />
       {errors.stretch_goals && (
         <div className="error-text">{errors.stretch_goals}</div>
@@ -594,14 +597,14 @@ function ClientInfo() {
         value={form.long_term_impact}
         onChange={handleChange}
         className="textarea-base"
-        placeholder="Enter one item per line"
+        placeholder="Enter"
       />
       {errors.long_term_impact && (
         <div className="error-text">{errors.long_term_impact}</div>
       )}
 
       <label className="label">
-        Would you characterise your project as well defined with specific steps, or as exploratory with open ended goals?
+        Would you characterise your project as well defined with specific steps, or as exploratory with open ended goals?*
       </label>
       <select
         name="scope_clarity"
@@ -621,7 +624,8 @@ function ClientInfo() {
       )}
 
       <label className="label">
-        Publication Potential: Kindly specify whether this project is anticipated to lead to a research publication. There is no expectation or requirement for such an outcome.
+        Publication Potential: Kindly specify whether this project is anticipated to lead to a
+        research publication. There is no expectation or requirement for such an outcome.*
       </label>
       <select
         name="publication_potential"
@@ -634,6 +638,9 @@ function ClientInfo() {
         <option value="no">No</option>
         <option value="unsure">Unsure</option>
       </select>
+      {errors.publication_potential && (
+        <div className="error-text">{errors.publication_potential}</div>
+      )}
     </>,
 
     // 3: Required Competencies & Technologies
