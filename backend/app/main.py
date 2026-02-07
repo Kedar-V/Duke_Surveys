@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import json
 from typing import Dict, Any
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -18,6 +19,7 @@ from .persist import (
     get_latest_intakes,
 )
 from .schemas import IntakeForm
+from .s3 import upload_documents
 
 app = FastAPI(title="Survey MVP")
 
@@ -178,6 +180,26 @@ def submit(session_id: str):
 def create_client_intake(payload: IntakeForm):
     intake_id = save_intake_form(payload.model_dump(mode="json"))
     return {"id": intake_id}
+
+
+@app.post("/client-intake/upload")
+def create_client_intake_upload(
+    payload: str = Form(...),
+    documents: list[UploadFile] | None = File(None),
+):
+    try:
+        payload_dict = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(400, "Invalid payload JSON") from exc
+
+    intake = IntakeForm.model_validate(payload_dict)
+    urls = upload_documents(documents or [])
+    intake_payload = intake.model_dump(mode="json")
+    if urls:
+        intake_payload["supplementary_documents"] = urls
+
+    intake_id = save_intake_form(intake_payload)
+    return {"id": intake_id, "documents": urls}
 
 
 @app.get("/client-intake/latest")

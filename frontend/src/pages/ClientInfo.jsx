@@ -366,10 +366,16 @@ function ClientInfo() {
       video_links: form.video_links.map((v) => v.trim()).filter(Boolean),
     };
 
+    const formData = new FormData();
+    formData.append("payload", JSON.stringify(payload));
+    form.supplementary_documents.forEach((file) => {
+      formData.append("documents", file);
+    });
+
     setSubmitting(true);
     setSubmitError(null);
 
-    submitClientIntake(payload)
+    submitClientIntake(formData)
       .then(() => setSubmitted(true))
       .catch((err) => setSubmitError(String(err)))
       .finally(() => setSubmitting(false));

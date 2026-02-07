@@ -40,14 +40,15 @@ export async function submitInstance(sessionId, instanceId, answers) {
 }
 
 export async function submitClientIntake(payload) {
-  const r = await fetch(`${API_BASE}/client-intake`, {
+  const isFormData = payload instanceof FormData;
+  const r = await fetch(`${API_BASE}/client-intake/upload`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    headers: isFormData ? undefined : { "Content-Type": "application/json" },
+    body: isFormData ? payload : JSON.stringify(payload),
   });
   if (!r.ok) {
     const t = await r.text();
-    throw new Error(`POST /client-intake ${r.status}: ${t}`);
+    throw new Error(`POST /client-intake/upload ${r.status}: ${t}`);
   }
   return readJson(r);
 }

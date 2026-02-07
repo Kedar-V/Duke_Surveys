@@ -14,6 +14,9 @@ services:
       MONGO_TLS_CA_FILE: ${MONGO_TLS_CA_FILE:-/app/certs/global-bundle.pem}
       MONGO_TLS_ALLOW_INVALID_HOSTNAMES: ${MONGO_TLS_ALLOW_INVALID_HOSTNAMES:-false}
       MONGO_RETRY_WRITES: ${MONGO_RETRY_WRITES:-false}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-app-capstone}
+      S3_PREFIX: ${S3_PREFIX:-client-intake}
       FRONTEND_DATA_PATH: "/app/frontend_data/projectsCatalog.js"
 
   frontend:

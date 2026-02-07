@@ -1,0 +1,84 @@
+{
+    "_id": ObjectId("6986ad377278f1326c717679"),
+    "raw": {
+        "company_name": "dafs",
+        "company_industry": "Healthcare",
+        "company_website": "https: //www.youtube.com/watch?v=V9PVRfjEBTI&list=RDIcLZG0cQH0s&index=9",
+        "contact_name": "aSas",
+        "contact_email": "kedarprashant.vaidya@duke.edu",
+        "project_title": "as",
+        "project_summary": "",
+        "project_description": "as",
+        "expected_outcomes": [
+            "as"
+        ],
+        "deliverables": [
+            "SAsa"
+        ],
+        "success_criteria": [],
+        "scope_clarity": "partially defined",
+        "required_skills": [
+            "SQL"
+        ],
+        "technical_domains": [
+            "Analytics"
+        ],
+        "data_access": "asas",
+        "project_sector": "Public Sector / Gov",
+        "supplementary_documents": [],
+        "video_links": []
+    },
+    "company": {
+        "name": "dafs",
+        "industry": "Healthcare",
+        "website": "https://www.youtube.com/watch?v=V9PVRfjEBTI&list=RDIcLZG0cQH0s&index=9"
+    },
+    "contact": {
+        "name": "aSas",
+        "email": "kedarprashant.vaidya@duke.edu"
+    },
+    "project": {
+        "title": "as",
+        "summary": "",
+        "description": "as",
+        "expected_outcomes": [
+            "as"
+        ],
+        "deliverables": [
+            "SAsa"
+        ],
+        "success_criteria": [],
+        "scope_clarity": "partially defined"
+    },
+    "competencies": {
+        "required_skills": [
+            "SQL"
+        ],
+        "technical_domains": [
+            "Analytics"
+        ],
+        "data_access": "asas"
+    },
+    "sector": "Public Sector / Gov",
+    "supplementary": {
+        "documents": [],
+        "video_links": []
+    },
+    "meta": {
+        "source": "clientinfo",
+        "created_at": datetime.datetime(2026,
+        2,
+        7,
+        3,
+        10,
+        47,
+        225000),
+        "updated_at": datetime.datetime(2026,
+        2,
+        7,
+        3,
+        10,
+        47,
+        225000)
+    }
+}
