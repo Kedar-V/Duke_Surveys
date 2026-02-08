@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import json
 from typing import Dict, Any
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from .engine import create_session, SESSIONS, materialise_plan, render_instance, next_instance
 from .data import list_teams, get_team
@@ -15,8 +16,10 @@ from .persist import (
     mark_complete,
     mark_submitted,
     save_intake_form,
+    get_latest_intakes,
 )
 from .schemas import IntakeForm
+from .s3 import upload_documents
 
 app = FastAPI(title="Survey MVP")
 
@@ -177,6 +180,43 @@ def submit(session_id: str):
 def create_client_intake(payload: IntakeForm):
     intake_id = save_intake_form(payload.model_dump(mode="json"))
     return {"id": intake_id}
+
+
+@app.post("/client-intake/upload")
+def create_client_intake_upload(
+    payload: str = Form(...),
+    documents: UploadFile | list[UploadFile] | None = File(None),
+):
+    try:
+        payload_dict = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        detail = {
+            "error": "Invalid payload JSON",
+            "payload_preview": payload[:200],
+        }
+        raise HTTPException(400, detail) from exc
+
+    try:
+        intake = IntakeForm.model_validate(payload_dict)
+    except ValidationError as exc:
+        raise HTTPException(422, exc.errors()) from exc
+    if isinstance(documents, UploadFile):
+        document_list = [documents]
+    else:
+        document_list = documents or []
+
+    urls = upload_documents(document_list)
+    intake_payload = intake.model_dump(mode="json")
+    if urls:
+        intake_payload["supplementary_documents"] = urls
+
+    intake_id = save_intake_form(intake_payload)
+    return {"id": intake_id, "documents": urls}
+
+
+@app.get("/client-intake/latest")
+def get_latest_client_intake(limit: int = 1):
+    return {"items": get_latest_intakes(limit=limit)}
 
 
 from .mongo import ping

@@ -3,6 +3,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 import re
 
+from pymongo import DESCENDING
+
 from .mongo import get_mongo
 
 def utcnow():
@@ -134,6 +136,7 @@ def save_intake_form(payload: dict) -> str:
     db = get_mongo()
     now = utcnow()
     doc = {
+        "raw": payload,
         "company": {
             "name": payload.get("company_name"),
             "industry": payload.get("company_industry"),
@@ -147,10 +150,11 @@ def save_intake_form(payload: dict) -> str:
             "title": payload.get("project_title"),
             "summary": payload.get("project_summary"),
             "description": payload.get("project_description"),
-            "expected_outcomes": payload.get("expected_outcomes", []),
-            "deliverables": payload.get("deliverables", []),
-            "success_criteria": payload.get("success_criteria", []) or [],
+            "minimum_deliverables": payload.get("minimum_deliverables", ""),
+            "stretch_goals": payload.get("stretch_goals", ""),
+            "long_term_impact": payload.get("long_term_impact", ""),
             "scope_clarity": payload.get("scope_clarity"),
+            "publication_potential": payload.get("publication_potential"),
         },
         "competencies": {
             "required_skills": payload.get("required_skills", []),
@@ -169,4 +173,18 @@ def save_intake_form(payload: dict) -> str:
         },
     }
     res = db.client_intake_forms.insert_one(doc)
+    if not res.acknowledged:
+        raise RuntimeError("DocumentDB insert was not acknowledged")
     return str(res.inserted_id)
+
+
+def get_latest_intakes(limit: int = 1) -> list[dict]:
+    db = get_mongo()
+    docs = list(
+        db.client_intake_forms.find({})
+        .sort([("meta.created_at", DESCENDING), ("_id", DESCENDING)])
+        .limit(limit)
+    )
+    for d in docs:
+        d["id"] = str(d.pop("_id"))
+    return docs

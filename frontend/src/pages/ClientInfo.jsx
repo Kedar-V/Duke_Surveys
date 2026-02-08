@@ -139,11 +139,12 @@ function ClientInfo() {
     project_title: "",
     project_summary: "",
     project_description: "",
-    expected_outcomes: [""],
-    deliverables: [""],
-    success_criteria: [""],
+    minimum_deliverables: "",
+    stretch_goals: "",
+    long_term_impact: "",
     scope_clarity: "",
     scope_clarity_other: "",
+    publication_potential: "",
     required_skills: [],
     required_skills_other: "",
     technical_domains: [],
@@ -160,6 +161,7 @@ function ClientInfo() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [pendingSupplementaryFile, setPendingSupplementaryFile] = useState(null);
 
   // Generic change handler
   function handleChange(e) {
@@ -200,6 +202,28 @@ function ClientInfo() {
       arr.splice(idx, 1);
       return { ...f, [field]: arr };
     });
+  }
+
+  function handleSupplementaryFileChange(e) {
+    const file = e.target.files?.[0] || null;
+    setPendingSupplementaryFile(file);
+    e.target.value = "";
+  }
+
+  function addSupplementaryFile() {
+    if (!pendingSupplementaryFile) return;
+    setForm((f) => ({
+      ...f,
+      supplementary_documents: [...f.supplementary_documents, pendingSupplementaryFile],
+    }));
+    setPendingSupplementaryFile(null);
+  }
+
+  function removeSupplementaryFile(idx) {
+    setForm((f) => ({
+      ...f,
+      supplementary_documents: f.supplementary_documents.filter((_, i) => i !== idx),
+    }));
   }
 
   // Per-page validation
@@ -249,20 +273,32 @@ function ClientInfo() {
       ) {
         e.project_description = "Required, max 5000 chars";
       }
-      if (
-        form.expected_outcomes.filter((x) => x.trim()).length < 1 ||
-        form.expected_outcomes.length > 5
-      ) {
-        e.expected_outcomes = "1–5 required";
+      const parsedOutcomes = form.minimum_deliverables
+        .split("\n")
+        .map((v) => v.trim())
+        .filter(Boolean);
+      if (parsedOutcomes.length < 1 || parsedOutcomes.length > 5) {
+        e.minimum_deliverables = "Required";
       }
-      if (
-        form.deliverables.filter((x) => x.trim()).length < 1 ||
-        form.deliverables.length > 10
-      ) {
-        e.deliverables = "1–10 required";
+      const parsedDeliverables = form.stretch_goals
+        .split("\n")
+        .map((v) => v.trim())
+        .filter(Boolean);
+      if (parsedDeliverables.length > 10) {
+        e.stretch_goals = "Max 10 items";
+      }
+      const parsedSuccessCriteria = form.long_term_impact
+        .split("\n")
+        .map((v) => v.trim())
+        .filter(Boolean);
+      if (parsedSuccessCriteria.length > 10) {
+        e.long_term_impact = "Max 10 items";
       }
       if (!form.scope_clarity) {
         e.scope_clarity = "Required";
+      }
+      if (!form.publication_potential) {
+        e.publication_potential = "Required";
       }
     }
 
@@ -353,23 +389,26 @@ function ClientInfo() {
           ? form.project_sector_other.trim()
           : form.project_sector,
       scope_clarity: form.scope_clarity,
+      publication_potential: form.publication_potential,
       required_skills: normalizedSkills,
       technical_domains: normalizedDomains,
-      expected_outcomes: form.expected_outcomes
-        .map((v) => v.trim())
-        .filter(Boolean),
-      deliverables: form.deliverables.map((v) => v.trim()).filter(Boolean),
-      success_criteria: form.success_criteria
-        .map((v) => v.trim())
-        .filter(Boolean),
+      minimum_deliverables: form.minimum_deliverables,
+      stretch_goals: form.stretch_goals,
+      long_term_impact: form.long_term_impact,
       supplementary_documents: form.supplementary_documents.map((f) => f.name),
       video_links: form.video_links.map((v) => v.trim()).filter(Boolean),
     };
 
+    const formData = new FormData();
+    formData.append("payload", JSON.stringify(payload));
+    form.supplementary_documents.forEach((file) => {
+      formData.append("documents", file);
+    });
+
     setSubmitting(true);
     setSubmitError(null);
 
-    submitClientIntake(payload)
+    submitClientIntake(formData)
       .then(() => setSubmitted(true))
       .catch((err) => setSubmitError(String(err)))
       .finally(() => setSubmitting(false));
@@ -523,110 +562,48 @@ function ClientInfo() {
         <div className="error-text">{errors.project_description}</div>
       )}
 
-      <label className="label">Expected Outcomes*</label>
-      {form.expected_outcomes.map((v, i) => (
-        <div key={i} className="flex gap-2 mb-2">
-          <input
-            value={v}
-            onChange={(e) =>
-              handleListChange("expected_outcomes", i, e.target.value)
-            }
-            className="input-base"
-          />
-          {form.expected_outcomes.length > 1 && (
-            <button
-              type="button"
-              onClick={() =>
-                removeListItem("expected_outcomes", i, 1)
-              }
-            >
-              -
-            </button>
-          )}
-          {form.expected_outcomes.length < 5 &&
-            i === form.expected_outcomes.length - 1 && (
-              <button
-                type="button"
-                onClick={() => addListItem("expected_outcomes", 5)}
-              >
-                +
-              </button>
-            )}
-        </div>
-      ))}
-      {errors.expected_outcomes && (
-        <div className="error-text">{errors.expected_outcomes}</div>
-      )}
-
-      <label className="label">Deliverables*</label>
-      {form.deliverables.map((v, i) => (
-        <div key={i} className="flex gap-2 mb-2">
-          <input
-            value={v}
-            onChange={(e) =>
-              handleListChange("deliverables", i, e.target.value)
-            }
-            className="input-base"
-          />
-          {form.deliverables.length > 1 && (
-            <button
-              type="button"
-              onClick={() => removeListItem("deliverables", i, 1)}
-            >
-              -
-            </button>
-          )}
-          {form.deliverables.length < 10 &&
-            i === form.deliverables.length - 1 && (
-              <button
-                type="button"
-                onClick={() => addListItem("deliverables", 10)}
-              >
-                +
-              </button>
-            )}
-        </div>
-      ))}
-      {errors.deliverables && (
-        <div className="error-text">{errors.deliverables}</div>
-      )}
-
-      <label className="label">Success Criteria</label>
-      {form.success_criteria.map((v, i) => (
-        <div key={i} className="flex gap-2 mb-2">
-          <input
-            value={v}
-            onChange={(e) =>
-              handleListChange("success_criteria", i, e.target.value)
-            }
-            className="input-base"
-          />
-          {form.success_criteria.length > 1 && (
-            <button
-              type="button"
-              onClick={() =>
-                removeListItem("success_criteria", i, 1)
-              }
-            >
-              -
-            </button>
-          )}
-          {i === form.success_criteria.length - 1 && (
-            <button
-              type="button"
-              onClick={() => addListItem("success_criteria", 10)}
-            >
-              +
-            </button>
-          )}
-        </div>
-      ))}
-      {errors.success_criteria && (
-        <div className="error-text">{errors.success_criteria}</div>
+      <label className="label">Minimum Achievable deliverables within timeline*</label>
+      <textarea
+        name="minimum_deliverables"
+        value={form.minimum_deliverables}
+        onChange={handleChange}
+        className="textarea-base"
+        placeholder="Enter"
+      />
+      {errors.minimum_deliverables && (
+        <div className="error-text">{errors.minimum_deliverables}</div>
       )}
 
       <label className="label">
-        Would you characterise your project as well defined with specific steps, or as exploratory with open ended goals?
+        Stretch goals that modestly exceed baseline expectations while remaining feasible
+      </label>
+      <textarea
+        name="stretch_goals"
+        value={form.stretch_goals}
+        onChange={handleChange}
+        className="textarea-base"
+        placeholder="Enter"
+      />
+      {errors.stretch_goals && (
+        <div className="error-text">{errors.stretch_goals}</div>
+      )}
+
+      <label className="label">
+        Significant contributions that extend beyond the project scope to drive long-term innovation and impact
+      </label>
+      <textarea
+        name="long_term_impact"
+        value={form.long_term_impact}
+        onChange={handleChange}
+        className="textarea-base"
+        placeholder="Enter"
+      />
+      {errors.long_term_impact && (
+        <div className="error-text">{errors.long_term_impact}</div>
+      )}
+
+      <label className="label">
+        Would you characterise your project as well defined with specific steps, or as exploratory with open ended goals?*
       </label>
       <select
         name="scope_clarity"
@@ -643,6 +620,25 @@ function ClientInfo() {
       </select>
       {errors.scope_clarity && (
         <div className="error-text">{errors.scope_clarity}</div>
+      )}
+
+      <label className="label">
+        Publication Potential: Kindly specify whether this project is anticipated to lead to a
+        research publication. There is no expectation or requirement for such an outcome.*
+      </label>
+      <select
+        name="publication_potential"
+        value={form.publication_potential}
+        onChange={handleChange}
+        className="select-base"
+      >
+        <option value="">Select...</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+        <option value="unsure">Unsure</option>
+      </select>
+      {errors.publication_potential && (
+        <div className="error-text">{errors.publication_potential}</div>
       )}
     </>,
 
@@ -741,11 +737,41 @@ function ClientInfo() {
       <input
         type="file"
         name="supplementary_documents"
-        multiple
         accept=".pdf,.doc,.docx,.ppt,.pptx,.pptm,.odt,.odp,.xls,.xlsx,.csv,.txt"
-        onChange={handleChange}
+        onChange={handleSupplementaryFileChange}
         className="input-base"
       />
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={addSupplementaryFile}
+          disabled={!pendingSupplementaryFile}
+        >
+          Add file
+        </button>
+        {pendingSupplementaryFile && (
+          <span className="text-sm text-slate-600">
+            {pendingSupplementaryFile.name}
+          </span>
+        )}
+      </div>
+      {form.supplementary_documents.length > 0 && (
+        <ul className="space-y-2">
+          {form.supplementary_documents.map((file, idx) => (
+            <li key={`${file.name}-${idx}`} className="flex items-center gap-2">
+              <span className="text-sm text-slate-700">{file.name}</span>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => removeSupplementaryFile(idx)}
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       {errors.supplementary_documents && (
         <div className="error-text">
           {errors.supplementary_documents}
@@ -798,11 +824,11 @@ function ClientInfo() {
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-10 relative">
-      <div className="absolute top-2 left-2 sm:top-4 sm:left-4">
+      <div className="absolute top-2 left-2 sm:top-4 sm:left-4 md:top-6 md:left-6">
         <img
           src="/assets/dukelogo.png"
           alt="Duke University"
-          className="h-[clamp(3.25rem,8vw,8rem)] w-auto max-w-[45vw]"
+          className="h-[clamp(2.5rem,12vw,6rem)] sm:h-[clamp(3.25rem,8vw,8rem)] md:h-[clamp(3.75rem,6vw,7.5rem)] w-auto max-w-[55vw] sm:max-w-[45vw] md:max-w-[35vw] object-contain"
         />
       </div>
       <div className="card max-w-3xl mx-auto p-8 mt-10 sm:mt-2">
@@ -859,7 +885,14 @@ function ClientInfo() {
                 className="btn-primary"
                 disabled={submitting}
               >
-                {submitting ? "Submitting..." : "Submit"}
+                {submitting ? (
+                  <span className="flex items-center gap-2">
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Submitting...
+                  </span>
+                ) : (
+                  "Submit"
+                )}
               </button>
             )}
           </div>

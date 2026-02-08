@@ -15,6 +15,20 @@ def get_mongo():
         # - In docker compose, backend must connect to hostname "mongodb"
         # - On host (no docker), localhost is fine
         url = os.environ.get("MONGO_URL", "mongodb://mongodb:27017")
+        tls_enabled = os.environ.get("MONGO_TLS", "false").lower() in {"1", "true", "yes"}
+        tls_ca_file = os.environ.get("MONGO_TLS_CA_FILE")
+        if not tls_enabled or not tls_ca_file:
+            tls_ca_file = None
+        elif not os.path.isabs(tls_ca_file):
+            tls_ca_file = None
+        elif not os.path.exists(tls_ca_file):
+            tls_ca_file = None
+        tls_allow_invalid = os.environ.get("MONGO_TLS_ALLOW_INVALID_HOSTNAMES", "false").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        retry_writes = os.environ.get("MONGO_RETRY_WRITES", "false").lower() in {"1", "true", "yes"}
 
         _client = MongoClient(
             url,
@@ -23,7 +37,10 @@ def get_mongo():
             socketTimeoutMS=10000,
             maxPoolSize=50,
             minPoolSize=5,
-            retryWrites=True,
+            retryWrites=retry_writes,
+            tls=tls_enabled,
+            tlsCAFile='certs/global-bundle.pem',
+            tlsAllowInvalidHostnames=tls_allow_invalid,
         )
 
     dbname = os.environ.get("MONGO_DB", "surveydb")

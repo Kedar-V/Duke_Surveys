@@ -1,26 +1,8 @@
 from __future__ import annotations
 
 from typing import List, Optional
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, field_validator
 from enum import Enum
-
-
-class CompanyIndustry(str, Enum):
-    finance = "Finance"
-    healthcare = "Healthcare"
-    retail = "Retail"
-    climate = "Climate"
-    social_impact = "Social Impact"
-    education = "Education"
-    manufacturing = "Manufacturing"
-
-
-class ProjectSector(str, Enum):
-    healthcare = "Healthcare"
-    finance = "Finance"
-    retail = "Retail"
-    climate = "Climate"
-    public_sector = "Public Sector"
 
 
 class ScopeClarity(str, Enum):
@@ -31,7 +13,7 @@ class ScopeClarity(str, Enum):
 
 class IntakeForm(BaseModel):
     company_name: str = Field(..., max_length=200)
-    company_industry: CompanyIndustry
+    company_industry: str
     company_website: Optional[HttpUrl] = None
 
     contact_name: str = Field(..., max_length=100)
@@ -40,16 +22,26 @@ class IntakeForm(BaseModel):
     project_title: str = Field(..., max_length=150)
     project_summary: Optional[str] = Field(default=None, max_length=300)
     project_description: str = Field(..., max_length=5000)
-    expected_outcomes: List[str] = Field(..., min_items=1, max_items=5)
-    deliverables: List[str] = Field(..., min_items=1, max_items=10)
-    success_criteria: Optional[List[str]] = None
+    minimum_deliverables: str = Field(..., min_length=1)
+    stretch_goals: Optional[str] = None
+    long_term_impact: Optional[str] = None
     scope_clarity: ScopeClarity
+    publication_potential: str = Field(..., min_length=1)
 
     required_skills: List[str] = Field(default_factory=list)
     technical_domains: List[str] = Field(default_factory=list)
     data_access: str
 
-    project_sector: ProjectSector
+    project_sector: str
 
     supplementary_documents: List[str] = Field(default_factory=list)
     video_links: List[HttpUrl] = Field(default_factory=list)
+
+    @field_validator("company_website", mode="before")
+    @classmethod
+    def empty_company_website_to_none(cls, value: object) -> object:
+        if value is None:
+            return None
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
