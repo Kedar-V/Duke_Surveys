@@ -68,6 +68,7 @@ def ensure_indexes():
     # client intake forms (idempotent)
     db.client_intake_forms.create_index([("created_at", DESCENDING)])
     db.client_intake_forms.create_index([("company_name", ASCENDING)])
+    db.client_intake_forms.create_index([("edit_token", ASCENDING)], unique=True, sparse=True)
 
     # TTL index (restart-safe)
     desired_ttl = 1200  # 20 minutes
