@@ -52,3 +52,26 @@ export async function submitClientIntake(payload) {
   }
   return readJson(r);
 }
+
+export async function getClientIntakeForEdit(token) {
+  const r = await fetch(`${API_BASE}/client-intake/edit/${encodeURIComponent(token)}`);
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`GET /client-intake/edit ${r.status}: ${t}`);
+  }
+  return readJson(r);
+}
+
+export async function updateClientIntake(token, payload) {
+  const isFormData = payload instanceof FormData;
+  const r = await fetch(`${API_BASE}/client-intake/edit/${encodeURIComponent(token)}`, {
+    method: "POST",
+    headers: isFormData ? undefined : { "Content-Type": "application/json" },
+    body: isFormData ? payload : JSON.stringify(payload),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`POST /client-intake/edit ${r.status}: ${t}`);
+  }
+  return readJson(r);
+}

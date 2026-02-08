@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import secrets
 from typing import Dict, Any
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,9 +19,12 @@ from .persist import (
     mark_submitted,
     save_intake_form,
     get_latest_intakes,
+    get_intake_by_token,
+    update_intake_by_token,
 )
 from .schemas import IntakeForm
 from .s3 import upload_documents
+from .email import send_edit_link_email
 
 app = FastAPI(title="Survey MVP")
 
@@ -210,13 +215,67 @@ def create_client_intake_upload(
     if urls:
         intake_payload["supplementary_documents"] = urls
 
-    intake_id = save_intake_form(intake_payload)
-    return {"id": intake_id, "documents": urls}
+    edit_token = secrets.token_urlsafe(24)
+    edit_base = os.environ.get("INTAKE_EDIT_BASE_URL", "http://3.91.188.75:5173/clientinfo")
+    edit_url = f"{edit_base}/edit/{edit_token}"
+
+    intake_id = save_intake_form(intake_payload, edit_token=edit_token, edit_url=edit_url)
+
+    try:
+        send_edit_link_email(intake_payload.get("contact_email"), edit_url)
+    except Exception as e:
+        
+        pass
+
+    return {"id": intake_id, "documents": urls, "edit_url": edit_url}
 
 
 @app.get("/client-intake/latest")
 def get_latest_client_intake(limit: int = 1):
     return {"items": get_latest_intakes(limit=limit)}
+
+
+@app.get("/client-intake/edit/{token}")
+def get_intake_for_edit(token: str):
+    doc = get_intake_by_token(token)
+    if not doc:
+        raise HTTPException(404, "edit link not found")
+    return {"item": doc.get("raw"), "edit_url": doc.get("edit_url")}
+
+
+@app.post("/client-intake/edit/{token}")
+def update_intake_for_edit(
+    token: str,
+    payload: str = Form(...),
+    documents: UploadFile | list[UploadFile] | None = File(None),
+):
+    try:
+        payload_dict = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        detail = {
+            "error": "Invalid payload JSON",
+            "payload_preview": payload[:200],
+        }
+        raise HTTPException(400, detail) from exc
+
+    try:
+        intake = IntakeForm.model_validate(payload_dict)
+    except ValidationError as exc:
+        raise HTTPException(422, exc.errors()) from exc
+
+    if isinstance(documents, UploadFile):
+        document_list = [documents]
+    else:
+        document_list = documents or []
+
+    urls = upload_documents(document_list)
+    intake_payload = intake.model_dump(mode="json")
+
+    updated_id = update_intake_by_token(token, intake_payload, uploaded_urls=urls)
+    if not updated_id:
+        raise HTTPException(404, "edit link not found")
+
+    return {"id": updated_id, "documents": urls}
 
 
 from .mongo import ping

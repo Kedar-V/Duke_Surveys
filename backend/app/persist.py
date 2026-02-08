@@ -132,9 +132,7 @@ def mark_submitted(session_id: str) -> None:
     )
 
 
-def save_intake_form(payload: dict) -> str:
-    db = get_mongo()
-    now = utcnow()
+def _build_intake_doc(payload: dict, now: datetime, edit_token: Optional[str] = None, edit_url: Optional[str] = None) -> dict:
     doc = {
         "raw": payload,
         "company": {
@@ -171,11 +169,60 @@ def save_intake_form(payload: dict) -> str:
             "created_at": now,
             "updated_at": now,
         },
+        "edit_token": edit_token,
+        "edit_url": edit_url,
+        "revisions": [],
     }
+    return doc
+
+
+def save_intake_form(payload: dict, edit_token: Optional[str] = None, edit_url: Optional[str] = None) -> str:
+    db = get_mongo()
+    now = utcnow()
+    doc = _build_intake_doc(payload, now, edit_token=edit_token, edit_url=edit_url)
     res = db.client_intake_forms.insert_one(doc)
     if not res.acknowledged:
         raise RuntimeError("DocumentDB insert was not acknowledged")
     return str(res.inserted_id)
+
+
+def get_intake_by_token(edit_token: str) -> Optional[dict]:
+    db = get_mongo()
+    doc = db.client_intake_forms.find_one({"edit_token": edit_token})
+    if not doc:
+        return None
+    doc["id"] = str(doc.pop("_id"))
+    return doc
+
+
+def update_intake_by_token(edit_token: str, payload: dict, uploaded_urls: Optional[list[str]] = None) -> Optional[str]:
+    db = get_mongo()
+    now = utcnow()
+    existing = db.client_intake_forms.find_one({"edit_token": edit_token})
+    if not existing:
+        return None
+
+    existing_docs = payload.get("supplementary_documents", [])
+    if uploaded_urls:
+        payload["supplementary_documents"] = [*existing_docs, *uploaded_urls]
+
+    updated_doc = _build_intake_doc(payload, now, edit_token=edit_token, edit_url=existing.get("edit_url"))
+    if existing.get("meta", {}).get("created_at"):
+        updated_doc.setdefault("meta", {})["created_at"] = existing["meta"]["created_at"]
+    updated_doc.pop("revisions", None)
+    revision = {
+        "updated_at": now,
+        "raw": existing.get("raw"),
+    }
+
+    db.client_intake_forms.update_one(
+        {"edit_token": edit_token},
+        {
+            "$set": updated_doc,
+            "$push": {"revisions": revision},
+        },
+    )
+    return str(existing.get("_id"))
 
 
 def get_latest_intakes(limit: int = 1) -> list[dict]:

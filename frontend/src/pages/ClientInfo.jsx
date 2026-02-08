@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { submitClientIntake } from "../api.js";
+import React, { useEffect, useState } from "react";
+import { submitClientIntake, getClientIntakeForEdit, updateClientIntake } from "../api.js";
+import { useParams } from "react-router-dom";
 
 const INDUSTRIES = [
   "Healthcare",
@@ -129,6 +130,7 @@ function MultiSelect({ options, value, onChange, label, otherValue, onOtherChang
 }
 
 function ClientInfo() {
+  const { token } = useParams();
   const [form, setForm] = useState({
     company_name: "",
     company_industry: "",
@@ -162,6 +164,7 @@ function ClientInfo() {
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [pendingSupplementaryFile, setPendingSupplementaryFile] = useState(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
 
   // Generic change handler
   function handleChange(e) {
@@ -378,6 +381,8 @@ function ClientInfo() {
           : []
       );
 
+    const existingDocs = form.supplementary_documents.filter((doc) => typeof doc === "string");
+
     const payload = {
       ...form,
       company_industry:
@@ -395,24 +400,69 @@ function ClientInfo() {
       minimum_deliverables: form.minimum_deliverables,
       stretch_goals: form.stretch_goals,
       long_term_impact: form.long_term_impact,
-      supplementary_documents: form.supplementary_documents.map((f) => f.name),
+      supplementary_documents: existingDocs,
       video_links: form.video_links.map((v) => v.trim()).filter(Boolean),
     };
 
     const formData = new FormData();
     formData.append("payload", JSON.stringify(payload));
     form.supplementary_documents.forEach((file) => {
-      formData.append("documents", file);
+      if (file instanceof File) {
+        formData.append("documents", file);
+      }
     });
 
     setSubmitting(true);
     setSubmitError(null);
 
-    submitClientIntake(formData)
+    const submitPromise = token
+      ? updateClientIntake(token, formData)
+      : submitClientIntake(formData);
+
+    submitPromise
       .then(() => setSubmitted(true))
       .catch((err) => setSubmitError(String(err)))
       .finally(() => setSubmitting(false));
   }
+
+  useEffect(() => {
+    if (!token) return;
+    setLoadingEdit(true);
+    setSubmitError(null);
+    getClientIntakeForEdit(token)
+      .then((res) => {
+        const item = res.item || {};
+        setForm((f) => ({
+          ...f,
+          company_name: item.company_name || "",
+          company_industry: item.company_industry || "",
+          company_industry_other: item.company_industry_other || "",
+          company_website: item.company_website || "",
+          contact_name: item.contact_name || "",
+          contact_email: item.contact_email || "",
+          project_title: item.project_title || "",
+          project_summary: item.project_summary || "",
+          project_description: item.project_description || "",
+          minimum_deliverables: item.minimum_deliverables || "",
+          stretch_goals: item.stretch_goals || "",
+          long_term_impact: item.long_term_impact || "",
+          scope_clarity: item.scope_clarity || "",
+          scope_clarity_other: item.scope_clarity_other || "",
+          publication_potential: item.publication_potential || "",
+          required_skills: item.required_skills || [],
+          required_skills_other: item.required_skills_other || "",
+          technical_domains: item.technical_domains || [],
+          technical_domains_other: item.technical_domains_other || "",
+          data_access: item.data_access || "",
+          project_sector: item.project_sector || "",
+          project_sector_other: item.project_sector_other || "",
+          supplementary_documents: item.supplementary_documents || [],
+          video_links: item.video_links?.length ? item.video_links : [""],
+        }));
+      })
+      .catch((err) => setSubmitError(String(err)))
+      .finally(() => setLoadingEdit(false));
+  }, [token]);
 
   const pages = [
     // 0: Corporate Entity Details
@@ -759,8 +809,22 @@ function ClientInfo() {
       {form.supplementary_documents.length > 0 && (
         <ul className="space-y-2">
           {form.supplementary_documents.map((file, idx) => (
-            <li key={`${file.name}-${idx}`} className="flex items-center gap-2">
-              <span className="text-sm text-slate-700">{file.name}</span>
+            <li
+              key={`${typeof file === "string" ? file : file.name}-${idx}`}
+              className="flex items-center gap-2"
+            >
+              {typeof file === "string" ? (
+                <a
+                  href={file}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm text-duke-700 underline"
+                >
+                  {file}
+                </a>
+              ) : (
+                <span className="text-sm text-slate-700">{file.name}</span>
+              )}
               <button
                 type="button"
                 className="btn-secondary"
