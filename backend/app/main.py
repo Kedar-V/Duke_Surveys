@@ -223,7 +223,8 @@ def create_client_intake_upload(
 
     try:
         send_edit_link_email(intake_payload.get("contact_email"), edit_url)
-    except Exception:
+    except Exception as e:
+        
         pass
 
     return {"id": intake_id, "documents": urls, "edit_url": edit_url}
