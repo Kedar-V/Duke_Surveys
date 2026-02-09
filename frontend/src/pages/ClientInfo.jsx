@@ -20,75 +20,24 @@ const INDUSTRIES = [
   "Agriculture",
   "Sports"
 ];
-
-
-const SECTORS = [
-  "Healthcare",
-  "Finance",
-  "Retail / E-commerce",
-  "Climate / Sustainability",
-  "Public Sector / Gov",
-  "Education",
-  "Manufacturing",
-  "Energy / Utilities",
-  "Transportation / Mobility",
-  "Logistics / Supply Chain",
-  "Media / Entertainment",
-  "Telecommunications",
-  "Real Estate / PropTech",
-  "Agriculture / FoodTech",
-  "Social Impact / Nonprofit",
-  "Insurance",
-  "Travel / Hospitality",
-  "Sports / Fitness",
-  "Cybersecurity",
-  "Biotech / Life Sciences",
-  "AdTech / MarTech",
-  "FinTech",
-  "HealthTech",
-  "EdTech",
-];
-
-const TECH_DOMAINS = [
-  "AI/ML",
-  "Data Engineering",
-  "Analytics",
-  "Web Development",
-  "Mobile Development",
-  "Cloud & DevOps",
-  "Product Innovation",
-  "UX/UI Design",
-  "Cybersecurity",
-  "Data Visualization",
-  "Business Intelligence",
-  "MLOps",
-  "NLP",
-  "Computer Vision",
-  "IoT / Edge",
-  "FinTech",
-  "HealthTech",
-  "ClimateTech",
-  "EduTech",
-  "AdTech",
-  "MarTech",
-  "GovTech / Civic Tech",
-  "Supply Chain / Logistics",
-  "E-commerce",
-  "Gaming / Media",
-];
-
 const SKILLS = [
   "Python",
   "SQL",
   "Machine Learning",
+  "Large Language Models",
+  "Prompt Engineering",
   "NLP",
-  "Statistics",
+  "Statistical Analysis",
   "Data Visualization",
   "Data Engineering",
+  "Data Modeling",
+  "Marketing Analytics",
+  "Advertising Analytics",
   "Cloud (AWS/GCP/Azure)",
   "APIs / Integration",
   "ETL / ELT",
   "Product Management",
+  "Experimentation / A/B Testing",
   "UX Research",
   "Project Management",
 ];
@@ -149,11 +98,8 @@ function ClientInfo() {
     publication_potential: "",
     required_skills: [],
     required_skills_other: "",
-    technical_domains: [],
-    technical_domains_other: "",
+    technical_domains: "",
     data_access: "",
-    project_sector: "",
-    project_sector_other: "",
     supplementary_documents: [],
     video_links: [""],
   });
@@ -243,15 +189,6 @@ function ClientInfo() {
       if (form.company_industry === OTHER_OPTION && !form.company_industry_other.trim()) {
         e.company_industry_other = "Please specify the industry";
       }
-      if (
-        form.company_website &&
-        !/^https?:\/\/.+\..+/.test(form.company_website)
-      ) {
-        e.company_website = "Invalid URL";
-      }
-    }
-
-    if (pageIdx === 1) {
       if (!form.contact_name || form.contact_name.length > 100) {
         e.contact_name = "Required, max 100 chars";
       }
@@ -263,7 +200,7 @@ function ClientInfo() {
       }
     }
 
-    if (pageIdx === 2) {
+    if (pageIdx === 1) {
       if (!form.project_title || form.project_title.length > 150) {
         e.project_title = "Required, max 150 chars";
       }
@@ -305,32 +242,29 @@ function ClientInfo() {
       }
     }
 
-    if (pageIdx === 3) {
+    if (pageIdx === 2) {
       // Example: could enforce at least one of skill/domain
       // if (!form.required_skills.length && !form.technical_domains.length) {
       //   e.required_skills = "Select at least one skill or domain";
       // }
     }
 
-    if (pageIdx === 3) {
-      if (!form.project_sector) {
-        e.project_sector = "Required";
-      }
-      if (form.project_sector === OTHER_OPTION && !form.project_sector_other.trim()) {
-        e.project_sector_other = "Please specify the sector";
-      }
+    if (pageIdx === 2) {
       if (!form.data_access) {
         e.data_access = "Required";
       }
       if (form.required_skills.includes(OTHER_OPTION) && !form.required_skills_other.trim()) {
         e.required_skills_other = "Please specify the skill";
       }
-      if (form.technical_domains.includes(OTHER_OPTION) && !form.technical_domains_other.trim()) {
-        e.technical_domains_other = "Please specify the domain";
-      }
     }
 
-    if (pageIdx === 4) {
+    if (pageIdx === 3) {
+      if (
+        form.company_website &&
+        !/^https?:\/\/.+\..+/.test(form.company_website)
+      ) {
+        e.company_website = "Invalid URL";
+      }
       if (
         form.video_links.some((l) => l && !/^https?:\/\/.+\..+/.test(l))
       ) {
@@ -374,25 +308,21 @@ function ClientInfo() {
           : []
       );
     const normalizedDomains = form.technical_domains
-      .filter((v) => v !== OTHER_OPTION)
-      .concat(
-        form.technical_domains.includes(OTHER_OPTION) && form.technical_domains_other.trim()
-          ? [form.technical_domains_other.trim()]
-          : []
-      );
+      .split(/\n|,/)
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    const normalizedIndustry =
+      form.company_industry === OTHER_OPTION
+        ? form.company_industry_other.trim()
+        : form.company_industry;
 
     const existingDocs = form.supplementary_documents.filter((doc) => typeof doc === "string");
 
     const payload = {
       ...form,
-      company_industry:
-        form.company_industry === OTHER_OPTION
-          ? form.company_industry_other.trim()
-          : form.company_industry,
-      project_sector:
-        form.project_sector === OTHER_OPTION
-          ? form.project_sector_other.trim()
-          : form.project_sector,
+      company_industry: normalizedIndustry,
+      project_sector: normalizedIndustry,
       scope_clarity: form.scope_clarity,
       publication_potential: form.publication_potential,
       required_skills: normalizedSkills,
@@ -451,11 +381,10 @@ function ClientInfo() {
           publication_potential: item.publication_potential || "",
           required_skills: item.required_skills || [],
           required_skills_other: item.required_skills_other || "",
-          technical_domains: item.technical_domains || [],
-          technical_domains_other: item.technical_domains_other || "",
+          technical_domains: item.technical_domains?.length
+            ? item.technical_domains.join("\n")
+            : (item.technical_domains || ""),
           data_access: item.data_access || "",
-          project_sector: item.project_sector || "",
-          project_sector_other: item.project_sector_other || "",
           supplementary_documents: item.supplementary_documents || [],
           video_links: item.video_links?.length ? item.video_links : [""],
         }));
@@ -465,11 +394,11 @@ function ClientInfo() {
   }, [token]);
 
   const pages = [
-    // 0: Corporate Entity Details
+    // 0: Corporate Entity Details + Primary Point of Contact
     <>
-      <h2 className="section-title">1. Corporate Entity Details</h2>
+      <h2 className="section-title">1. Corporate Entity Details & Primary Point of Contact</h2>
 
-      <label className="label">Organisation Name*</label>
+      <label className="label">Organization Name*</label>
       <input
         name="company_name"
         value={form.company_name}
@@ -481,7 +410,9 @@ function ClientInfo() {
         <div className="error-text">{errors.company_name}</div>
       )}
 
-      <label className="label">Organisation Industry*</label>
+      <label className="label">
+        Organization Industry (If you are at Duke, then specify your school and department.)*
+      </label>
       <select
         name="company_industry"
         value={form.company_industry}
@@ -514,22 +445,6 @@ function ClientInfo() {
         </>
       )}
 
-      <label className="label">Organisation Website</label>
-      <input
-        name="company_website"
-        value={form.company_website}
-        onChange={handleChange}
-        className="input-base"
-      />
-      {errors.company_website && (
-        <div className="error-text">{errors.company_website}</div>
-      )}
-    </>,
-
-    // 1: Primary Point of Contact
-    <>
-      <h2 className="section-title">2. Primary Point of Contact</h2>
-
       <label className="label">Contact Name*</label>
       <input
         name="contact_name"
@@ -554,9 +469,9 @@ function ClientInfo() {
       )}
     </>,
 
-    // 2: Project Specification
+    // 1: Project Specification
     <>
-      <h2 className="section-title">3. Project Specification</h2>
+      <h2 className="section-title">2. Project Specification</h2>
 
       <label className="label">Project Title*</label>
       <input
@@ -692,15 +607,15 @@ function ClientInfo() {
       )}
     </>,
 
-    // 3: Required Competencies & Technologies
+    // 2: Required Competencies & Technologies
     <>
-      <h2 className="section-title">4. Required Competencies and Technologies</h2>
+      <h2 className="section-title">3. Required Competencies and Technologies</h2>
 
       <MultiSelect
         options={SKILLS}
         value={form.required_skills}
         onChange={(v) => setForm((f) => ({ ...f, required_skills: v }))}
-        label="Required Skills"
+        label="Required Skills: Select all applicable skills (use the Command key to choose multiple)."
         otherValue={form.required_skills_other}
         onOtherChange={(v) => setForm((f) => ({ ...f, required_skills_other: v }))}
       />
@@ -708,58 +623,29 @@ function ClientInfo() {
         <div className="error-text">{errors.required_skills_other}</div>
       )}
 
-      <MultiSelect
-        options={TECH_DOMAINS}
+      <label className="label">
+        Technical Domains (Optional): Add specific domains if applicable, such as IoT, advisement,
+        compliance and gaming.
+      </label>
+      <textarea
+        name="technical_domains"
         value={form.technical_domains}
-        onChange={(v) => setForm((f) => ({ ...f, technical_domains: v }))}
-        label="Technical Domains"
-        otherValue={form.technical_domains_other}
-        onOtherChange={(v) => setForm((f) => ({ ...f, technical_domains_other: v }))}
-      />
-      {errors.technical_domains_other && (
-        <div className="error-text">{errors.technical_domains_other}</div>
-      )}
-
-      <label className="label">Project Sector (Industry Domain)*</label>
-      <select
-        name="project_sector"
-        value={form.project_sector}
         onChange={handleChange}
-        className="select-base"
-      >
-        <option value="">Select...</option>
-        {SECTORS.map((s) => (
-          <option key={s} value={s}>
-            {s}
-          </option>
-        ))}
-        <option value={OTHER_OPTION}>Other</option>
-      </select>
-      {errors.project_sector && (
-        <div className="error-text">{errors.project_sector}</div>
-      )}
-      {form.project_sector === OTHER_OPTION && (
-        <>
-          <input
-            name="project_sector_other"
-            value={form.project_sector_other}
-            onChange={handleChange}
-            placeholder="Enter sector"
-            className="input-base mt-2"
-          />
-          {errors.project_sector_other && (
-            <div className="error-text">{errors.project_sector_other}</div>
-          )}
-        </>
-      )}
+        className="textarea-base"
+        placeholder="Enter domains, separated by commas or new lines"
+      />
 
-      <label className="label">Data Access*</label>
+      <label className="label">
+        Data Access (If you plan to provide proprietary data, please briefly describe it. If not,
+        list recommended public datasets if any, or indicate that students will need to find all
+        relevant public data on their own.)*
+      </label>
       <textarea
         name="data_access"
         value={form.data_access}
         onChange={handleChange}
         className="textarea-base"
-        placeholder="Describe data assets, access methodology, and restrictions"
+        placeholder="Describe data access and sources"
       />
       {errors.data_access && (
         <div className="error-text">{errors.data_access}</div>
@@ -770,9 +656,21 @@ function ClientInfo() {
       )}
     </>,
 
-    // 4: Supplementary Materials
+    // 3: Supplementary Materials
     <>
-      <h2 className="section-title">5. Supplementary Materials</h2>
+      <h2 className="section-title">4. Supplementary Materials</h2>
+
+      <label className="label">Organization Website (Optional)</label>
+      <input
+        name="company_website"
+        value={form.company_website}
+        onChange={handleChange}
+        className="input-base"
+        placeholder="https://"
+      />
+      {errors.company_website && (
+        <div className="error-text">{errors.company_website}</div>
+      )}
 
       <label className="label">Supplementary Documents</label>
       <p className="muted">
