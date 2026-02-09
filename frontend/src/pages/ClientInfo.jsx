@@ -659,7 +659,7 @@ function ClientInfo() {
     // 3: Supplementary Materials
     <>
       <h2 className="section-title">4. Supplementary Materials</h2>
-
+{/* 
       <label className="label">Organization Website (Optional)</label>
       <input
         name="company_website"
@@ -670,7 +670,7 @@ function ClientInfo() {
       />
       {errors.company_website && (
         <div className="error-text">{errors.company_website}</div>
-      )}
+      )} */}
 
       <label className="label">Supplementary Documents</label>
       <p className="muted">
