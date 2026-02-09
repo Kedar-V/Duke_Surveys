@@ -21,18 +21,24 @@ MONGO_TLS_CA_FILE="/app/certs/rds-combined-ca-bundle.pem"
 MONGO_RETRY_WRITES="false"
 ```
 
-## Intake Edit Link + SES Email
+## Intake Edit Link + Gmail SMTP
 
-Set these environment variables to send edit links via AWS SES:
+Set these environment variables to send edit links via Gmail SMTP:
 
-- `SES_SENDER_EMAIL`: Verified SES sender email address.
-- `AWS_REGION` or `SES_REGION`: AWS region for SES (e.g. `us-east-1`).
+- `SMTP_HOST`: SMTP host (default: `smtp.gmail.com`).
+- `SMTP_PORT`: SMTP port (default: `587`).
+- `SMTP_USER`: Gmail address or SMTP username.
+- `SMTP_PASSWORD`: Gmail App Password (recommended) or SMTP password.
+- `SMTP_SENDER_EMAIL`: Sender email shown in the message (defaults to `SMTP_USER`).
 - `INTAKE_EDIT_BASE_URL`: Base URL for edit links (e.g. `http://3.91.188.75:5173/clientinfo`).
 
 Example:
 
 ```sh
-SES_SENDER_EMAIL="kv133@duke.edu"
-AWS_REGION="us-east-1"
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_USER="kv133@duke.edu"
+SMTP_PASSWORD="<app-password>"
+SMTP_SENDER_EMAIL="kv133@duke.edu"
 INTAKE_EDIT_BASE_URL="http://3.91.188.75:5173/clientinfo"
 ```
