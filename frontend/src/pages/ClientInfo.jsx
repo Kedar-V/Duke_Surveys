@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { submitClientIntake, getClientIntakeForEdit, updateClientIntake } from "../api.js";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const INDUSTRIES = [
   "Healthcare",
@@ -80,6 +80,8 @@ function MultiSelect({ options, value, onChange, label, otherValue, onOtherChang
 
 function ClientInfo() {
   const { token } = useParams();
+  const navigate = useNavigate();
+  const [banner, setBanner] = useState(null);
   const [form, setForm] = useState({
     org_name: "",
     org_industry: "",
@@ -346,14 +348,35 @@ function ClientInfo() {
 
     setSubmitting(true);
     setSubmitError(null);
+    setBanner(null);
 
     const submitPromise = token
       ? updateClientIntake(token, formData)
       : submitClientIntake(formData);
 
     submitPromise
-      .then(() => setSubmitted(true))
-      .catch((err) => setSubmitError(String(err)))
+      .then((res) => {
+        const editUrl = res?.edit_url || "";
+        const extracted = String(editUrl).match(/\/edit\/([^/?#]+)/)?.[1] || "";
+        const finalToken = token || extracted;
+
+        if (finalToken) {
+          navigate(`/clientinfo/submitted/${encodeURIComponent(finalToken)}`);
+          return;
+        }
+
+        setSubmitted(true);
+      })
+      .catch((err) => {
+        if (err?.status === 409) {
+          const orgName = (payload.org_name || "").trim();
+          setBanner(
+            `${orgName || "This org"} already exists, please use edit link to edit your submission, if you have missplaced it, you may contact: ABC`
+          );
+          return;
+        }
+        setSubmitError(String(err));
+      })
       .finally(() => setSubmitting(false));
   }
 
@@ -800,6 +823,25 @@ function ClientInfo() {
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-10 relative">
+      {banner ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <button
+            type="button"
+            aria-label="Dismiss banner"
+            className="absolute inset-0 bg-slate-900/20"
+            onClick={() => setBanner(null)}
+          />
+          <div className="relative card w-[min(40rem,calc(100%-2rem))] p-6 text-center">
+            <div className="font-heading text-duke-900 text-xl">Organization already submitted</div>
+            <div className="mt-2 text-sm text-slate-700">{banner}</div>
+            <div className="mt-5 flex justify-center">
+              <button type="button" className="btn-primary" onClick={() => setBanner(null)}>
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div className="absolute top-2 left-2 sm:top-4 sm:left-4 md:top-6 md:left-6">
         <img
           src="/assets/dukelogo.png"

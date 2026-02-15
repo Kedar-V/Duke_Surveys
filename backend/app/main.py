@@ -8,7 +8,13 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ValidationError
 
-from .engine import create_session, SESSIONS, materialise_plan, render_instance, next_instance
+from .engine import (
+    create_session,
+    SESSIONS,
+    materialise_plan,
+    render_instance,
+    next_instance,
+)
 from .data import list_teams, get_team
 from .db import init_db, db_health
 from .persist import (
@@ -18,6 +24,7 @@ from .persist import (
     mark_complete,
     mark_submitted,
     save_intake_form,
+    OrgAlreadyExistsError,
     get_latest_intakes,
     get_intake_by_token,
     update_intake_by_token,
@@ -41,20 +48,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class CreateSessionResponse(BaseModel):
     session_id: str
     teams: list[str]
 
+
 class SaveAnswersRequest(BaseModel):
     answers: Dict[str, Any]
+
 
 @app.on_event("startup")
 def startup():
     init_db()
 
+
 @app.get("/healthz")
 def healthz():
     return {"ok": True, "db": db_health()}
+
 
 @app.post("/sessions", response_model=CreateSessionResponse)
 def post_sessions():
@@ -67,6 +79,7 @@ def post_sessions():
         pass
     return {"session_id": s["session_id"], "teams": list_teams()}
 
+
 @app.get("/sessions/{session_id}/instances/{instance_id}")
 def get_instance(session_id: str, instance_id: str):
     s = SESSIONS.get(session_id)
@@ -74,13 +87,16 @@ def get_instance(session_id: str, instance_id: str):
         raise HTTPException(404, "session not found")
 
     if instance_id == "intro__1":
-        return render_instance(s, {"instance_id": "intro__1", "kind": "intro", "bindings": {}})
+        return render_instance(
+            s, {"instance_id": "intro__1", "kind": "intro", "bindings": {}}
+        )
 
     inst = next((i for i in s.get("plan", []) if i["instance_id"] == instance_id), None)
     if not inst:
         raise HTTPException(404, "instance not found")
 
     return render_instance(s, inst)
+
 
 @app.post("/sessions/{session_id}/instances/{instance_id}/answers")
 def post_answers(session_id: str, instance_id: str, req: SaveAnswersRequest):
@@ -96,7 +112,9 @@ def post_answers(session_id: str, instance_id: str, req: SaveAnswersRequest):
         kind = "intro"
         bindings = {}
     else:
-        inst = next((i for i in s.get("plan", []) if i["instance_id"] == instance_id), None)
+        inst = next(
+            (i for i in s.get("plan", []) if i["instance_id"] == instance_id), None
+        )
         if not inst:
             raise HTTPException(404, "instance not found")
         kind = inst["kind"]
@@ -167,6 +185,7 @@ def post_answers(session_id: str, instance_id: str, req: SaveAnswersRequest):
 
     return {"next_instance_id": nxt["instance_id"]}
 
+
 @app.post("/sessions/{session_id}/submit")
 def submit(session_id: str):
     s = SESSIONS.get(session_id)
@@ -183,8 +202,11 @@ def submit(session_id: str):
 
 @app.post("/client-intake")
 def create_client_intake(payload: IntakeForm):
-    intake_id = save_intake_form(payload.model_dump(mode="json"))
-    return {"id": intake_id}
+    try:
+        intake_id = save_intake_form(payload.model_dump(mode="json"))
+        return {"id": intake_id}
+    except OrgAlreadyExistsError as exc:
+        raise HTTPException(409, "ORG_ALREADY_EXISTS") from exc
 
 
 @app.post("/client-intake/upload")
@@ -216,15 +238,22 @@ def create_client_intake_upload(
         intake_payload["supplementary_documents"] = urls
 
     edit_token = secrets.token_urlsafe(24)
-    edit_base = os.environ.get("INTAKE_EDIT_BASE_URL", "http://3.91.188.75:5173/clientinfo")
+    edit_base = os.environ.get(
+        "INTAKE_EDIT_BASE_URL", "http://3.91.188.75:5173/clientinfo"
+    )
     edit_url = f"{edit_base}/edit/{edit_token}"
 
-    intake_id = save_intake_form(intake_payload, edit_token=edit_token, edit_url=edit_url)
+    try:
+        intake_id = save_intake_form(
+            intake_payload, edit_token=edit_token, edit_url=edit_url
+        )
+    except OrgAlreadyExistsError as exc:
+        raise HTTPException(409, "ORG_ALREADY_EXISTS") from exc
 
     try:
         send_edit_link_email(intake_payload.get("contact_email"), edit_url)
     except Exception as e:
-        
+
         pass
 
     return {"id": intake_id, "documents": urls, "edit_url": edit_url}
@@ -276,5 +305,3 @@ def update_intake_for_edit(
         raise HTTPException(404, "edit link not found")
 
     return {"id": updated_id, "documents": urls}
-
-

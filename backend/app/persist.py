@@ -3,14 +3,20 @@ from datetime import datetime, timezone
 from typing import Optional
 import re
 
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
 from .db import SessionLocal
 from .models import ClientIntakeFormRow
 
+
+class OrgAlreadyExistsError(Exception):
+    pass
+
+
 def utcnow():
     return datetime.now(timezone.utc)
+
 
 def slugify(s: str) -> str:
     s = s.strip().lower()
@@ -18,8 +24,10 @@ def slugify(s: str) -> str:
     s = re.sub(r"_+", "_", s).strip("_")
     return s
 
+
 def create_session_doc(session_id: str) -> None:
     return None
+
 
 def save_intro_and_materialise(
     session_id: str,
@@ -31,7 +39,14 @@ def save_intro_and_materialise(
 ) -> None:
     return None
 
-def save_instance_answers(session_id: str, instance_kind: str, instance_id: str, answers: dict, bindings: Optional[dict] = None) -> None:
+
+def save_instance_answers(
+    session_id: str,
+    instance_kind: str,
+    instance_id: str,
+    answers: dict,
+    bindings: Optional[dict] = None,
+) -> None:
     """
     Writes answers into the final schema under answers.<block>.
     - mentor_confirmation -> answers.mentor_confirmation
@@ -42,17 +57,32 @@ def save_instance_answers(session_id: str, instance_kind: str, instance_id: str,
     """
     return None
 
+
 def mark_complete(session_id: str) -> None:
     return None
+
 
 def mark_submitted(session_id: str) -> None:
     return None
 
 
-def save_intake_form(payload: dict, edit_token: Optional[str] = None, edit_url: Optional[str] = None) -> str:
+def save_intake_form(
+    payload: dict, edit_token: Optional[str] = None, edit_url: Optional[str] = None
+) -> str:
     db: Session = SessionLocal()
     now = utcnow()
-    org_name = payload.get("org_name")
+    org_name = (payload.get("org_name") or "").strip()
+
+    # If the org already exists, don't insert again.
+    existing = (
+        db.query(ClientIntakeFormRow)
+        .filter(func.lower(ClientIntakeFormRow.org_name) == org_name.lower())
+        .first()
+    )
+    if existing is not None:
+        db.close()
+        raise OrgAlreadyExistsError()
+
     row = ClientIntakeFormRow(
         org_name=org_name,
         raw=payload,
@@ -92,7 +122,11 @@ def save_intake_form(payload: dict, edit_token: Optional[str] = None, edit_url: 
 
 def get_intake_by_token(edit_token: str) -> Optional[dict]:
     db: Session = SessionLocal()
-    row = db.query(ClientIntakeFormRow).filter(ClientIntakeFormRow.edit_token == edit_token).first()
+    row = (
+        db.query(ClientIntakeFormRow)
+        .filter(ClientIntakeFormRow.edit_token == edit_token)
+        .first()
+    )
     if not row:
         db.close()
         return None
@@ -105,10 +139,16 @@ def get_intake_by_token(edit_token: str) -> Optional[dict]:
     return doc
 
 
-def update_intake_by_token(edit_token: str, payload: dict, uploaded_urls: Optional[list[str]] = None) -> Optional[str]:
+def update_intake_by_token(
+    edit_token: str, payload: dict, uploaded_urls: Optional[list[str]] = None
+) -> Optional[str]:
     db: Session = SessionLocal()
     now = utcnow()
-    row = db.query(ClientIntakeFormRow).filter(ClientIntakeFormRow.edit_token == edit_token).first()
+    row = (
+        db.query(ClientIntakeFormRow)
+        .filter(ClientIntakeFormRow.edit_token == edit_token)
+        .first()
+    )
     if not row:
         db.close()
         return None
