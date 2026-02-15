@@ -10,7 +10,7 @@ from pydantic import BaseModel, ValidationError
 
 from .engine import create_session, SESSIONS, materialise_plan, render_instance, next_instance
 from .data import list_teams, get_team
-from .mongo import ensure_indexes
+from .db import init_db, db_health
 from .persist import (
     create_session_doc,
     save_intro_and_materialise,
@@ -50,16 +50,16 @@ class SaveAnswersRequest(BaseModel):
 
 @app.on_event("startup")
 def startup():
-    ensure_indexes()
+    init_db()
 
 @app.get("/healthz")
 def healthz():
-    return {"ok": True}
+    return {"ok": True, "db": db_health()}
 
 @app.post("/sessions", response_model=CreateSessionResponse)
 def post_sessions():
     s = create_session()
-    # Persist minimal session doc (does not affect runtime if mongo is down)
+    # Persist minimal session doc (does not affect runtime if DB is down)
     try:
         create_session_doc(s["session_id"])
     except Exception:
@@ -102,7 +102,7 @@ def post_answers(session_id: str, instance_id: str, req: SaveAnswersRequest):
         kind = inst["kind"]
         bindings = inst.get("bindings", {})
 
-    # Intro: materialise plan and persist canonical session fields + plan in Mongo
+    # Intro: materialise plan and persist canonical session fields + plan in DB
     if instance_id == "intro__1":
         team_name = s["answers"][instance_id].get("ProjectTeam")
         if not team_name:
@@ -110,7 +110,7 @@ def post_answers(session_id: str, instance_id: str, req: SaveAnswersRequest):
 
         materialise_plan(s, team_name)
 
-        # Build a Mongo-friendly plan list (stable, serialisable)
+        # Build a stable, serialisable plan list
         plan = []
         for p in s.get("plan", []):
             item = {"instance_id": p["instance_id"], "kind": p["kind"]}
@@ -278,8 +278,3 @@ def update_intake_for_edit(
     return {"id": updated_id, "documents": urls}
 
 
-from .mongo import ping
-
-@app.get("/healthz")
-def healthz():
-    return {"ok": True, "mongo": ping()}

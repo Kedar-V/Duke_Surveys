@@ -81,10 +81,10 @@ function MultiSelect({ options, value, onChange, label, otherValue, onOtherChang
 function ClientInfo() {
   const { token } = useParams();
   const [form, setForm] = useState({
-    company_name: "",
-    company_industry: "",
-    company_industry_other: "",
-    company_website: "",
+    org_name: "",
+    org_industry: "",
+    org_industry_other: "",
+    org_website: "",
     contact_name: "",
     contact_email: "",
     project_title: "",
@@ -180,14 +180,14 @@ function ClientInfo() {
     const e = {};
 
     if (pageIdx === 0) {
-      if (!form.company_name || form.company_name.length > 200) {
-        e.company_name = "Required, max 200 chars";
+      if (!form.org_name || form.org_name.length > 200) {
+        e.org_name = "Required, max 200 chars";
       }
-      if (!form.company_industry) {
-        e.company_industry = "Required";
+      if (!form.org_industry) {
+        e.org_industry = "Required";
       }
-      if (form.company_industry === OTHER_OPTION && !form.company_industry_other.trim()) {
-        e.company_industry_other = "Please specify the industry";
+      if (form.org_industry === OTHER_OPTION && !form.org_industry_other.trim()) {
+        e.org_industry_other = "Please specify the industry";
       }
       if (!form.contact_name || form.contact_name.length > 100) {
         e.contact_name = "Required, max 100 chars";
@@ -260,10 +260,10 @@ function ClientInfo() {
 
     if (pageIdx === 3) {
       if (
-        form.company_website &&
-        !/^https?:\/\/.+\..+/.test(form.company_website)
+        form.org_website &&
+        !/^https?:\/\/.+\..+/.test(form.org_website)
       ) {
-        e.company_website = "Invalid URL";
+        e.org_website = "Invalid URL";
       }
       if (
         form.video_links.some((l) => l && !/^https?:\/\/.+\..+/.test(l))
@@ -313,15 +313,17 @@ function ClientInfo() {
       .filter(Boolean);
 
     const normalizedIndustry =
-      form.company_industry === OTHER_OPTION
-        ? form.company_industry_other.trim()
-        : form.company_industry;
+      form.org_industry === OTHER_OPTION
+        ? form.org_industry_other.trim()
+        : form.org_industry;
 
     const existingDocs = form.supplementary_documents.filter((doc) => typeof doc === "string");
 
     const payload = {
       ...form,
-      company_industry: normalizedIndustry,
+      org_industry: normalizedIndustry,
+      org_industry_other:
+        form.org_industry === OTHER_OPTION ? form.org_industry_other.trim() : "",
       project_sector: normalizedIndustry,
       scope_clarity: form.scope_clarity,
       publication_potential: form.publication_potential,
@@ -362,12 +364,24 @@ function ClientInfo() {
     getClientIntakeForEdit(token)
       .then((res) => {
         const item = res.item || {};
+        const industryValue = item.org_industry || item.company_industry || "";
+        const isIndustryOther = industryValue && !INDUSTRIES.includes(industryValue);
+        const skillList = Array.isArray(item.required_skills) ? item.required_skills : [];
+        const knownSkills = skillList.filter((skill) => SKILLS.includes(skill));
+        const otherSkills = skillList.filter((skill) => !SKILLS.includes(skill));
+        const requiredSkills = otherSkills.length
+          ? [...knownSkills, OTHER_OPTION]
+          : knownSkills;
+        const requiredSkillsOther =
+          item.required_skills_other || otherSkills.join(", ");
         setForm((f) => ({
           ...f,
-          company_name: item.company_name || "",
-          company_industry: item.company_industry || "",
-          company_industry_other: item.company_industry_other || "",
-          company_website: item.company_website || "",
+          org_name: item.org_name || item.company_name || "",
+          org_industry: isIndustryOther ? OTHER_OPTION : industryValue,
+          org_industry_other: isIndustryOther
+            ? (item.org_industry_other || item.company_industry_other || industryValue)
+            : (item.org_industry_other || item.company_industry_other || ""),
+          org_website: item.org_website || item.company_website || "",
           contact_name: item.contact_name || "",
           contact_email: item.contact_email || "",
           project_title: item.project_title || "",
@@ -379,8 +393,8 @@ function ClientInfo() {
           scope_clarity: item.scope_clarity || "",
           scope_clarity_other: item.scope_clarity_other || "",
           publication_potential: item.publication_potential || "",
-          required_skills: item.required_skills || [],
-          required_skills_other: item.required_skills_other || "",
+          required_skills: requiredSkills,
+          required_skills_other: requiredSkillsOther,
           technical_domains: item.technical_domains?.length
             ? item.technical_domains.join("\n")
             : (item.technical_domains || ""),
@@ -400,22 +414,22 @@ function ClientInfo() {
 
       <label className="label">Organization Name*</label>
       <input
-        name="company_name"
-        value={form.company_name}
+        name="org_name"
+        value={form.org_name}
         onChange={handleChange}
         maxLength={200}
         className="input-base"
       />
-      {errors.company_name && (
-        <div className="error-text">{errors.company_name}</div>
+      {errors.org_name && (
+        <div className="error-text">{errors.org_name}</div>
       )}
 
       <label className="label">
         Organization Industry (If you are at Duke, then specify your school and department.)*
       </label>
       <select
-        name="company_industry"
-        value={form.company_industry}
+        name="org_industry"
+        value={form.org_industry}
         onChange={handleChange}
         className="select-base"
       >
@@ -427,20 +441,20 @@ function ClientInfo() {
         ))}
         <option value={OTHER_OPTION}>Other</option>
       </select>
-      {errors.company_industry && (
-        <div className="error-text">{errors.company_industry}</div>
+      {errors.org_industry && (
+        <div className="error-text">{errors.org_industry}</div>
       )}
-      {form.company_industry === OTHER_OPTION && (
+      {form.org_industry === OTHER_OPTION && (
         <>
           <input
-            name="company_industry_other"
-            value={form.company_industry_other}
+            name="org_industry_other"
+            value={form.org_industry_other}
             onChange={handleChange}
             placeholder="Enter industry"
             className="input-base mt-2"
           />
-          {errors.company_industry_other && (
-            <div className="error-text">{errors.company_industry_other}</div>
+          {errors.org_industry_other && (
+            <div className="error-text">{errors.org_industry_other}</div>
           )}
         </>
       )}
@@ -662,14 +676,14 @@ function ClientInfo() {
 {/* 
       <label className="label">Organization Website (Optional)</label>
       <input
-        name="company_website"
-        value={form.company_website}
+        name="org_website"
+        value={form.org_website}
         onChange={handleChange}
         className="input-base"
         placeholder="https://"
       />
-      {errors.company_website && (
-        <div className="error-text">{errors.company_website}</div>
+      {errors.org_website && (
+        <div className="error-text">{errors.org_website}</div>
       )} */}
 
       <label className="label">Supplementary Documents</label>
