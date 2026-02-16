@@ -51,6 +51,7 @@ function MultiSelect({ options, value, onChange, label, otherValue, onOtherChang
   return (
     <div className="mb-4">
       <label className="label">{label}</label>
+      <p className="muted">Tip: On desktop use Cmd/Ctrl-click to select multiple.</p>
       <select
         value={value}
         onChange={(e) =>
@@ -70,7 +71,7 @@ function MultiSelect({ options, value, onChange, label, otherValue, onOtherChang
         <input
           value={otherValue}
           onChange={(e) => onOtherChange(e.target.value)}
-          placeholder="Enter a custom option"
+          placeholder="Other (e.g., Time-series forecasting)"
           className="input-base mt-2"
         />
       )}
@@ -215,26 +216,14 @@ function ClientInfo() {
       ) {
         e.project_description = "Required, max 5000 chars";
       }
-      const parsedOutcomes = form.minimum_deliverables
-        .split("\n")
-        .map((v) => v.trim())
-        .filter(Boolean);
-      if (parsedOutcomes.length < 1 || parsedOutcomes.length > 5) {
-        e.minimum_deliverables = "Required";
+      if (!form.minimum_deliverables || form.minimum_deliverables.length > 5000) {
+        e.minimum_deliverables = "Required, max 5000 chars";
       }
-      const parsedDeliverables = form.stretch_goals
-        .split("\n")
-        .map((v) => v.trim())
-        .filter(Boolean);
-      if (parsedDeliverables.length > 10) {
-        e.stretch_goals = "Max 10 items";
+      if (form.stretch_goals.length > 5000) {
+        e.stretch_goals = "Max 5000 chars";
       }
-      const parsedSuccessCriteria = form.long_term_impact
-        .split("\n")
-        .map((v) => v.trim())
-        .filter(Boolean);
-      if (parsedSuccessCriteria.length > 10) {
-        e.long_term_impact = "Max 10 items";
+      if (form.long_term_impact.length > 5000) {
+        e.long_term_impact = "Max 5000 chars";
       }
       if (!form.scope_clarity) {
         e.scope_clarity = "Required";
@@ -442,14 +431,14 @@ function ClientInfo() {
         onChange={handleChange}
         maxLength={200}
         className="input-base"
+        placeholder='E.g., "Acme Health Systems" or "Duke University — Pratt (ECE)"'
       />
       {errors.org_name && (
         <div className="error-text">{errors.org_name}</div>
       )}
 
-      <label className="label">
-        Organization Industry (If you are at Duke, then specify your school and department.)*
-      </label>
+      <label className="label">Organization Industry*</label>
+      <p className="muted">If you are at Duke, specify your school and department.</p>
       <select
         name="org_industry"
         value={form.org_industry}
@@ -473,7 +462,7 @@ function ClientInfo() {
             name="org_industry_other"
             value={form.org_industry_other}
             onChange={handleChange}
-            placeholder="Enter industry"
+            placeholder="E.g., Public Policy — Sanford"
             className="input-base mt-2"
           />
           {errors.org_industry_other && (
@@ -489,6 +478,7 @@ function ClientInfo() {
         onChange={handleChange}
         maxLength={100}
         className="input-base"
+        placeholder="E.g., Jane Smith"
       />
       {errors.contact_name && (
         <div className="error-text">{errors.contact_name}</div>
@@ -496,10 +486,14 @@ function ClientInfo() {
 
       <label className="label">Contact Email*</label>
       <input
+        type="email"
+        inputMode="email"
+        autoComplete="email"
         name="contact_email"
         value={form.contact_email}
         onChange={handleChange}
         className="input-base"
+        placeholder="name@org.com"
       />
       {errors.contact_email && (
         <div className="error-text">{errors.contact_email}</div>
@@ -517,6 +511,7 @@ function ClientInfo() {
         onChange={handleChange}
         maxLength={150}
         className="input-base"
+        placeholder="E.g., Forecast customer churn risk from usage data"
       />
       {errors.project_title && (
         <div className="error-text">{errors.project_title}</div>
@@ -529,6 +524,7 @@ function ClientInfo() {
         onChange={handleChange}
         maxLength={300}
         className="textarea-base"
+        placeholder="1–2 sentences summarizing the problem and expected outcome"
       />
       <div
         className={
@@ -550,6 +546,7 @@ function ClientInfo() {
         onChange={handleChange}
         maxLength={5000}
         className="textarea-base"
+        placeholder="Background / who is impacted / current process / what success looks like"
       />
       <div
         className={
@@ -570,7 +567,8 @@ function ClientInfo() {
         value={form.minimum_deliverables}
         onChange={handleChange}
         className="textarea-base"
-        placeholder="Enter"
+        maxLength={5000}
+        placeholder="Describe the minimum achievable deliverables within the project timeline."
       />
       {errors.minimum_deliverables && (
         <div className="error-text">{errors.minimum_deliverables}</div>
@@ -584,7 +582,8 @@ function ClientInfo() {
         value={form.stretch_goals}
         onChange={handleChange}
         className="textarea-base"
-        placeholder="Enter"
+        maxLength={5000}
+        placeholder="Optional. Describe any stretch goals if applicable."
       />
       {errors.stretch_goals && (
         <div className="error-text">{errors.stretch_goals}</div>
@@ -598,7 +597,8 @@ function ClientInfo() {
         value={form.long_term_impact}
         onChange={handleChange}
         className="textarea-base"
-        placeholder="Enter"
+        maxLength={5000}
+        placeholder="Optional. Describe longer-term impact or follow-on opportunities."
       />
       {errors.long_term_impact && (
         <div className="error-text">{errors.long_term_impact}</div>
@@ -607,6 +607,7 @@ function ClientInfo() {
       <label className="label">
         Would you characterise your project as well defined with specific steps, or as exploratory with open ended goals?*
       </label>
+      <p className="muted">Choose the option that best matches how clear the scope is today.</p>
       <select
         name="scope_clarity"
         value={form.scope_clarity}
@@ -616,7 +617,7 @@ function ClientInfo() {
         <option value="">Select...</option>
         {SCOPE.map((s) => (
           <option key={s} value={s}>
-            {s}
+            {s.charAt(0).toUpperCase() + s.slice(1)}
           </option>
         ))}
       </select>
@@ -624,10 +625,8 @@ function ClientInfo() {
         <div className="error-text">{errors.scope_clarity}</div>
       )}
 
-      <label className="label">
-        Publication Potential: Kindly specify whether this project is anticipated to lead to a
-        research publication. There is no expectation or requirement for such an outcome.*
-      </label>
+      <label className="label">Publication Potential*</label>
+      <p className="muted">No expectation or requirement—this is only to understand potential outcomes.</p>
       <select
         name="publication_potential"
         value={form.publication_potential}
@@ -652,7 +651,7 @@ function ClientInfo() {
         options={SKILLS}
         value={form.required_skills}
         onChange={(v) => setForm((f) => ({ ...f, required_skills: v }))}
-        label="Required Skills: Select all applicable skills (use the Command key to choose multiple)."
+        label="Required Skills (select all that apply)"
         otherValue={form.required_skills_other}
         onOtherChange={(v) => setForm((f) => ({ ...f, required_skills_other: v }))}
       />
@@ -664,6 +663,7 @@ function ClientInfo() {
         Technical Domains (Optional): Add specific domains if applicable, such as IoT, advisement,
         compliance and gaming.
       </label>
+      <p className="muted">Optional. Separate items with commas or new lines.</p>
       <textarea
         name="technical_domains"
         value={form.technical_domains}
@@ -677,6 +677,7 @@ function ClientInfo() {
         list recommended public datasets if any, or indicate that students will need to find all
         relevant public data on their own.)*
       </label>
+      <p className="muted">Include data type, size, access method, and any restrictions.</p>
       <textarea
         name="data_access"
         value={form.data_access}
@@ -696,28 +697,26 @@ function ClientInfo() {
     // 3: Supplementary Materials
     <>
       <h2 className="section-title">4. Supplementary Materials</h2>
-{/* 
+
       <label className="label">Organization Website (Optional)</label>
+      <p className="muted">If applicable, paste the full URL including https://</p>
       <input
+        type="url"
+        inputMode="url"
         name="org_website"
         value={form.org_website}
         onChange={handleChange}
         className="input-base"
-        placeholder="https://"
+        placeholder="https://www.example.org"
       />
       {errors.org_website && (
         <div className="error-text">{errors.org_website}</div>
-      )} */}
+      )}
 
       <label className="label">Supplementary Documents</label>
       <p className="muted">
-        You may upload any supporting materials that help our student team understand your
-        project more effectively. Examples include PDFs, specification documents,
-        presentations, data samples, or background briefs. Sharing these materials gives the
-        team a clearer view of your goals, expected outcomes, and any existing work. This
-        allows the students to prepare more thoroughly, ask better questions during the
-        kickoff, and begin the engagement with a stronger foundation. Permitted formats
-        include PDF, document files, and presentation files.
+        Optional. Upload supporting docs (PDF/spec deck/sample data/background brief). Choose one file,
+        then click “Add file”.
       </p>
       <input
         type="file"
@@ -779,12 +778,7 @@ function ClientInfo() {
 
       <label className="label">Introductory or Relevant Videos (Optional)</label>
       <p className="muted">
-        You may share an optional link to an introductory video, a short overview of your
-        organisation, or any relevant demonstration. A brief video often conveys context that
-        is difficult to capture in text, and it helps the team understand your mission, your
-        users, and the problem space. This enables the team to align more quickly with your
-        vision and accelerates the early discovery process. Please ensure that the link is a
-        valid URL.
+        Optional. Paste up to 10 links (e.g., YouTube/Vimeo/Drive) to provide helpful context.
       </p>
       {form.video_links.map((v, i) => (
         <div key={i} className="flex gap-2 mb-2">
@@ -793,12 +787,17 @@ function ClientInfo() {
             onChange={(e) =>
               handleListChange("video_links", i, e.target.value)
             }
+            type="url"
+            inputMode="url"
+            placeholder="https://..."
             className="input-base"
           />
           {form.video_links.length > 1 && (
             <button
               type="button"
               onClick={() => removeListItem("video_links", i, 1)}
+              className="btn-secondary px-3 py-2"
+              aria-label="Remove video link"
             >
               -
             </button>
@@ -807,6 +806,8 @@ function ClientInfo() {
             <button
               type="button"
               onClick={() => addListItem("video_links", 10)}
+              className="btn-secondary px-3 py-2"
+              aria-label="Add video link"
             >
               +
             </button>
@@ -853,7 +854,7 @@ function ClientInfo() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-heading text-duke-900">
-              Organisation Project Intake Form
+              Organization Project Intake Form
             </h1>
             <p className="muted">
               Step {page + 1} of {pages.length}
