@@ -298,10 +298,14 @@ function ClientInfo() {
           ? [form.required_skills_other.trim()]
           : []
       );
-    const normalizedDomains = form.technical_domains
-      .split(/\n|,/)
-      .map((v) => v.trim())
-      .filter(Boolean);
+    const normalizedDomains = Array.isArray(form.technical_domains)
+      ? form.technical_domains
+          .map((v) => String(v).trim())
+          .filter(Boolean)
+      : (typeof form.technical_domains === "string" ? form.technical_domains : "")
+          .split(/\n|,/)
+          .map((v) => v.trim())
+          .filter(Boolean);
 
     const normalizedIndustry =
       form.org_industry === OTHER_OPTION
