@@ -55,12 +55,12 @@ jobs:
               git reset --hard
               git clean -fd
               git pull
-              git checkout ui
+              git checkout hotfixes
             else
               echo "Cleaning directory and cloning repo..."
               # sudo rm -rf /home/ec2-user/app/*
               git clone https://github.com/Kedar-V/Duke_Surveys.git .
-              git checkout ui
+              git checkout hotfixes
             fi
 
       - name: Start containers on EC2

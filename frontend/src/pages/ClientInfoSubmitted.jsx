@@ -6,7 +6,7 @@ export default function ClientInfoSubmitted() {
   const [copyStatus, setCopyStatus] = useState("");
 
   const editUrl = token
-    ? `${window.location.origin}/clientinfo/edit/${encodeURIComponent(token)}`
+    ? `${window.location.origin}/edit/${encodeURIComponent(token)}`
     : "";
 
   async function handleCopy() {
@@ -57,7 +57,7 @@ export default function ClientInfoSubmitted() {
         </div>
 
         <div className="mt-6">
-          <Link className="btn-secondary" to="/clientinfo">
+          <Link className="btn-secondary" to="/">
             Start a new submission
           </Link>
         </div>

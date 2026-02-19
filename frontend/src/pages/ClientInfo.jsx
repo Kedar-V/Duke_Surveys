@@ -350,7 +350,7 @@ function ClientInfo() {
         const finalToken = token || extracted;
 
         if (finalToken) {
-          navigate(`/clientinfo/submitted/${encodeURIComponent(finalToken)}`);
+          navigate(`/submitted/${encodeURIComponent(finalToken)}`);
           return;
         }
 
