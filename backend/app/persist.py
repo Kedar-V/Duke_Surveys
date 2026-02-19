@@ -158,7 +158,7 @@ def update_intake_by_token(
         payload["supplementary_documents"] = [*existing_docs, *uploaded_urls]
 
     revisions = list(row.revisions or [])
-    revisions.append({"updated_at": now, "raw": row.raw})
+    revisions.append({"updated_at": now.isoformat(), "raw": row.raw})
 
     row.raw = payload
     row.org_name = payload.get("org_name")
