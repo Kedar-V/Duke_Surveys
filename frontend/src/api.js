@@ -9,6 +9,15 @@ async function readJson(r) {
   }
 }
 
+async function readJsonOrText(r) {
+  const text = await r.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
 export async function createSession() {
   const r = await fetch(`${API_BASE}/sessions`, { method: "POST" });
   if (!r.ok) throw new Error(`POST /sessions ${r.status}`);
@@ -47,8 +56,15 @@ export async function submitClientIntake(payload) {
     body: isFormData ? payload : JSON.stringify(payload),
   });
   if (!r.ok) {
-    const t = await r.text();
-    throw new Error(`POST /client-intake/upload ${r.status}: ${t}`);
+    const body = await readJsonOrText(r);
+    const message =
+      typeof body === "string"
+        ? body
+        : body?.detail || body?.error || JSON.stringify(body);
+    const err = new Error(`POST /client-intake/upload ${r.status}: ${message}`);
+    err.status = r.status;
+    err.body = body;
+    throw err;
   }
   return readJson(r);
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { submitClientIntake, getClientIntakeForEdit, updateClientIntake } from "../api.js";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const INDUSTRIES = [
   "Healthcare",
@@ -20,75 +20,24 @@ const INDUSTRIES = [
   "Agriculture",
   "Sports"
 ];
-
-
-const SECTORS = [
-  "Healthcare",
-  "Finance",
-  "Retail / E-commerce",
-  "Climate / Sustainability",
-  "Public Sector / Gov",
-  "Education",
-  "Manufacturing",
-  "Energy / Utilities",
-  "Transportation / Mobility",
-  "Logistics / Supply Chain",
-  "Media / Entertainment",
-  "Telecommunications",
-  "Real Estate / PropTech",
-  "Agriculture / FoodTech",
-  "Social Impact / Nonprofit",
-  "Insurance",
-  "Travel / Hospitality",
-  "Sports / Fitness",
-  "Cybersecurity",
-  "Biotech / Life Sciences",
-  "AdTech / MarTech",
-  "FinTech",
-  "HealthTech",
-  "EdTech",
-];
-
-const TECH_DOMAINS = [
-  "AI/ML",
-  "Data Engineering",
-  "Analytics",
-  "Web Development",
-  "Mobile Development",
-  "Cloud & DevOps",
-  "Product Innovation",
-  "UX/UI Design",
-  "Cybersecurity",
-  "Data Visualization",
-  "Business Intelligence",
-  "MLOps",
-  "NLP",
-  "Computer Vision",
-  "IoT / Edge",
-  "FinTech",
-  "HealthTech",
-  "ClimateTech",
-  "EduTech",
-  "AdTech",
-  "MarTech",
-  "GovTech / Civic Tech",
-  "Supply Chain / Logistics",
-  "E-commerce",
-  "Gaming / Media",
-];
-
 const SKILLS = [
   "Python",
   "SQL",
   "Machine Learning",
+  "Large Language Models",
+  "Prompt Engineering",
   "NLP",
-  "Statistics",
+  "Statistical Analysis",
   "Data Visualization",
   "Data Engineering",
+  "Data Modeling",
+  "Marketing Analytics",
+  "Advertising Analytics",
   "Cloud (AWS/GCP/Azure)",
   "APIs / Integration",
   "ETL / ELT",
   "Product Management",
+  "Experimentation / A/B Testing",
   "UX Research",
   "Project Management",
 ];
@@ -102,6 +51,7 @@ function MultiSelect({ options, value, onChange, label, otherValue, onOtherChang
   return (
     <div className="mb-4">
       <label className="label">{label}</label>
+      <p className="muted">Tip: On desktop use Cmd/Ctrl-click to select multiple.</p>
       <select
         value={value}
         onChange={(e) =>
@@ -121,7 +71,7 @@ function MultiSelect({ options, value, onChange, label, otherValue, onOtherChang
         <input
           value={otherValue}
           onChange={(e) => onOtherChange(e.target.value)}
-          placeholder="Enter a custom option"
+          placeholder="Other (e.g., Time-series forecasting)"
           className="input-base mt-2"
         />
       )}
@@ -131,11 +81,13 @@ function MultiSelect({ options, value, onChange, label, otherValue, onOtherChang
 
 function ClientInfo() {
   const { token } = useParams();
+  const navigate = useNavigate();
+  const [banner, setBanner] = useState(null);
   const [form, setForm] = useState({
-    company_name: "",
-    company_industry: "",
-    company_industry_other: "",
-    company_website: "",
+    org_name: "",
+    org_industry: "",
+    org_industry_other: "",
+    org_website: "",
     contact_name: "",
     contact_email: "",
     project_title: "",
@@ -149,11 +101,8 @@ function ClientInfo() {
     publication_potential: "",
     required_skills: [],
     required_skills_other: "",
-    technical_domains: [],
-    technical_domains_other: "",
+    technical_domains: "",
     data_access: "",
-    project_sector: "",
-    project_sector_other: "",
     supplementary_documents: [],
     video_links: [""],
   });
@@ -234,24 +183,15 @@ function ClientInfo() {
     const e = {};
 
     if (pageIdx === 0) {
-      if (!form.company_name || form.company_name.length > 200) {
-        e.company_name = "Required, max 200 chars";
+      if (!form.org_name || form.org_name.length > 200) {
+        e.org_name = "Required, max 200 chars";
       }
-      if (!form.company_industry) {
-        e.company_industry = "Required";
+      if (!form.org_industry) {
+        e.org_industry = "Required";
       }
-      if (form.company_industry === OTHER_OPTION && !form.company_industry_other.trim()) {
-        e.company_industry_other = "Please specify the industry";
+      if (form.org_industry === OTHER_OPTION && !form.org_industry_other.trim()) {
+        e.org_industry_other = "Please specify the industry";
       }
-      if (
-        form.company_website &&
-        !/^https?:\/\/.+\..+/.test(form.company_website)
-      ) {
-        e.company_website = "Invalid URL";
-      }
-    }
-
-    if (pageIdx === 1) {
       if (!form.contact_name || form.contact_name.length > 100) {
         e.contact_name = "Required, max 100 chars";
       }
@@ -263,7 +203,7 @@ function ClientInfo() {
       }
     }
 
-    if (pageIdx === 2) {
+    if (pageIdx === 1) {
       if (!form.project_title || form.project_title.length > 150) {
         e.project_title = "Required, max 150 chars";
       }
@@ -276,26 +216,14 @@ function ClientInfo() {
       ) {
         e.project_description = "Required, max 5000 chars";
       }
-      const parsedOutcomes = form.minimum_deliverables
-        .split("\n")
-        .map((v) => v.trim())
-        .filter(Boolean);
-      if (parsedOutcomes.length < 1 || parsedOutcomes.length > 5) {
-        e.minimum_deliverables = "Required";
+      if (!form.minimum_deliverables || form.minimum_deliverables.length > 5000) {
+        e.minimum_deliverables = "Required, max 5000 chars";
       }
-      const parsedDeliverables = form.stretch_goals
-        .split("\n")
-        .map((v) => v.trim())
-        .filter(Boolean);
-      if (parsedDeliverables.length > 10) {
-        e.stretch_goals = "Max 10 items";
+      if (form.stretch_goals.length > 5000) {
+        e.stretch_goals = "Max 5000 chars";
       }
-      const parsedSuccessCriteria = form.long_term_impact
-        .split("\n")
-        .map((v) => v.trim())
-        .filter(Boolean);
-      if (parsedSuccessCriteria.length > 10) {
-        e.long_term_impact = "Max 10 items";
+      if (form.long_term_impact.length > 5000) {
+        e.long_term_impact = "Max 5000 chars";
       }
       if (!form.scope_clarity) {
         e.scope_clarity = "Required";
@@ -305,32 +233,29 @@ function ClientInfo() {
       }
     }
 
-    if (pageIdx === 3) {
+    if (pageIdx === 2) {
       // Example: could enforce at least one of skill/domain
       // if (!form.required_skills.length && !form.technical_domains.length) {
       //   e.required_skills = "Select at least one skill or domain";
       // }
     }
 
-    if (pageIdx === 3) {
-      if (!form.project_sector) {
-        e.project_sector = "Required";
-      }
-      if (form.project_sector === OTHER_OPTION && !form.project_sector_other.trim()) {
-        e.project_sector_other = "Please specify the sector";
-      }
+    if (pageIdx === 2) {
       if (!form.data_access) {
         e.data_access = "Required";
       }
       if (form.required_skills.includes(OTHER_OPTION) && !form.required_skills_other.trim()) {
         e.required_skills_other = "Please specify the skill";
       }
-      if (form.technical_domains.includes(OTHER_OPTION) && !form.technical_domains_other.trim()) {
-        e.technical_domains_other = "Please specify the domain";
-      }
     }
 
-    if (pageIdx === 4) {
+    if (pageIdx === 3) {
+      if (
+        form.org_website &&
+        !/^https?:\/\/.+\..+/.test(form.org_website)
+      ) {
+        e.org_website = "Invalid URL";
+      }
       if (
         form.video_links.some((l) => l && !/^https?:\/\/.+\..+/.test(l))
       ) {
@@ -374,25 +299,23 @@ function ClientInfo() {
           : []
       );
     const normalizedDomains = form.technical_domains
-      .filter((v) => v !== OTHER_OPTION)
-      .concat(
-        form.technical_domains.includes(OTHER_OPTION) && form.technical_domains_other.trim()
-          ? [form.technical_domains_other.trim()]
-          : []
-      );
+      .split(/\n|,/)
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    const normalizedIndustry =
+      form.org_industry === OTHER_OPTION
+        ? form.org_industry_other.trim()
+        : form.org_industry;
 
     const existingDocs = form.supplementary_documents.filter((doc) => typeof doc === "string");
 
     const payload = {
       ...form,
-      company_industry:
-        form.company_industry === OTHER_OPTION
-          ? form.company_industry_other.trim()
-          : form.company_industry,
-      project_sector:
-        form.project_sector === OTHER_OPTION
-          ? form.project_sector_other.trim()
-          : form.project_sector,
+      org_industry: normalizedIndustry,
+      org_industry_other:
+        form.org_industry === OTHER_OPTION ? form.org_industry_other.trim() : "",
+      project_sector: normalizedIndustry,
       scope_clarity: form.scope_clarity,
       publication_potential: form.publication_potential,
       required_skills: normalizedSkills,
@@ -414,14 +337,35 @@ function ClientInfo() {
 
     setSubmitting(true);
     setSubmitError(null);
+    setBanner(null);
 
     const submitPromise = token
       ? updateClientIntake(token, formData)
       : submitClientIntake(formData);
 
     submitPromise
-      .then(() => setSubmitted(true))
-      .catch((err) => setSubmitError(String(err)))
+      .then((res) => {
+        const editUrl = res?.edit_url || "";
+        const extracted = String(editUrl).match(/\/edit\/([^/?#]+)/)?.[1] || "";
+        const finalToken = token || extracted;
+
+        if (finalToken) {
+          navigate(`/clientinfo/submitted/${encodeURIComponent(finalToken)}`);
+          return;
+        }
+
+        setSubmitted(true);
+      })
+      .catch((err) => {
+        if (err?.status === 409) {
+          const orgName = (payload.org_name || "").trim();
+          setBanner(
+            `${orgName || "This org"} already exists, please use edit link to edit your submission, if you have missplaced it, you may contact: ABC`
+          );
+          return;
+        }
+        setSubmitError(String(err));
+      })
       .finally(() => setSubmitting(false));
   }
 
@@ -432,12 +376,24 @@ function ClientInfo() {
     getClientIntakeForEdit(token)
       .then((res) => {
         const item = res.item || {};
+        const industryValue = item.org_industry || item.company_industry || "";
+        const isIndustryOther = industryValue && !INDUSTRIES.includes(industryValue);
+        const skillList = Array.isArray(item.required_skills) ? item.required_skills : [];
+        const knownSkills = skillList.filter((skill) => SKILLS.includes(skill));
+        const otherSkills = skillList.filter((skill) => !SKILLS.includes(skill));
+        const requiredSkills = otherSkills.length
+          ? [...knownSkills, OTHER_OPTION]
+          : knownSkills;
+        const requiredSkillsOther =
+          item.required_skills_other || otherSkills.join(", ");
         setForm((f) => ({
           ...f,
-          company_name: item.company_name || "",
-          company_industry: item.company_industry || "",
-          company_industry_other: item.company_industry_other || "",
-          company_website: item.company_website || "",
+          org_name: item.org_name || item.company_name || "",
+          org_industry: isIndustryOther ? OTHER_OPTION : industryValue,
+          org_industry_other: isIndustryOther
+            ? (item.org_industry_other || item.company_industry_other || industryValue)
+            : (item.org_industry_other || item.company_industry_other || ""),
+          org_website: item.org_website || item.company_website || "",
           contact_name: item.contact_name || "",
           contact_email: item.contact_email || "",
           project_title: item.project_title || "",
@@ -449,13 +405,12 @@ function ClientInfo() {
           scope_clarity: item.scope_clarity || "",
           scope_clarity_other: item.scope_clarity_other || "",
           publication_potential: item.publication_potential || "",
-          required_skills: item.required_skills || [],
-          required_skills_other: item.required_skills_other || "",
-          technical_domains: item.technical_domains || [],
-          technical_domains_other: item.technical_domains_other || "",
+          required_skills: requiredSkills,
+          required_skills_other: requiredSkillsOther,
+          technical_domains: item.technical_domains?.length
+            ? item.technical_domains.join("\n")
+            : (item.technical_domains || ""),
           data_access: item.data_access || "",
-          project_sector: item.project_sector || "",
-          project_sector_other: item.project_sector_other || "",
           supplementary_documents: item.supplementary_documents || [],
           video_links: item.video_links?.length ? item.video_links : [""],
         }));
@@ -465,26 +420,28 @@ function ClientInfo() {
   }, [token]);
 
   const pages = [
-    // 0: Corporate Entity Details
+    // 0: Corporate Entity Details + Primary Point of Contact
     <>
-      <h2 className="section-title">1. Corporate Entity Details</h2>
+      <h2 className="section-title">1. Corporate Entity Details & Primary Point of Contact</h2>
 
-      <label className="label">Organisation Name*</label>
+      <label className="label">Organization Name*</label>
       <input
-        name="company_name"
-        value={form.company_name}
+        name="org_name"
+        value={form.org_name}
         onChange={handleChange}
         maxLength={200}
         className="input-base"
+        placeholder='E.g., "Acme Health Systems" or "Duke University — Pratt (ECE)"'
       />
-      {errors.company_name && (
-        <div className="error-text">{errors.company_name}</div>
+      {errors.org_name && (
+        <div className="error-text">{errors.org_name}</div>
       )}
 
-      <label className="label">Organisation Industry*</label>
+      <label className="label">Organization Industry*</label>
+      <p className="muted">If you are at Duke, specify your school and department.</p>
       <select
-        name="company_industry"
-        value={form.company_industry}
+        name="org_industry"
+        value={form.org_industry}
         onChange={handleChange}
         className="select-base"
       >
@@ -496,39 +453,23 @@ function ClientInfo() {
         ))}
         <option value={OTHER_OPTION}>Other</option>
       </select>
-      {errors.company_industry && (
-        <div className="error-text">{errors.company_industry}</div>
+      {errors.org_industry && (
+        <div className="error-text">{errors.org_industry}</div>
       )}
-      {form.company_industry === OTHER_OPTION && (
+      {form.org_industry === OTHER_OPTION && (
         <>
           <input
-            name="company_industry_other"
-            value={form.company_industry_other}
+            name="org_industry_other"
+            value={form.org_industry_other}
             onChange={handleChange}
-            placeholder="Enter industry"
+            placeholder="E.g., Public Policy — Sanford"
             className="input-base mt-2"
           />
-          {errors.company_industry_other && (
-            <div className="error-text">{errors.company_industry_other}</div>
+          {errors.org_industry_other && (
+            <div className="error-text">{errors.org_industry_other}</div>
           )}
         </>
       )}
-
-      <label className="label">Organisation Website</label>
-      <input
-        name="company_website"
-        value={form.company_website}
-        onChange={handleChange}
-        className="input-base"
-      />
-      {errors.company_website && (
-        <div className="error-text">{errors.company_website}</div>
-      )}
-    </>,
-
-    // 1: Primary Point of Contact
-    <>
-      <h2 className="section-title">2. Primary Point of Contact</h2>
 
       <label className="label">Contact Name*</label>
       <input
@@ -537,6 +478,7 @@ function ClientInfo() {
         onChange={handleChange}
         maxLength={100}
         className="input-base"
+        placeholder="E.g., Jane Smith"
       />
       {errors.contact_name && (
         <div className="error-text">{errors.contact_name}</div>
@@ -544,19 +486,23 @@ function ClientInfo() {
 
       <label className="label">Contact Email*</label>
       <input
+        type="email"
+        inputMode="email"
+        autoComplete="email"
         name="contact_email"
         value={form.contact_email}
         onChange={handleChange}
         className="input-base"
+        placeholder="name@org.com"
       />
       {errors.contact_email && (
         <div className="error-text">{errors.contact_email}</div>
       )}
     </>,
 
-    // 2: Project Specification
+    // 1: Project Specification
     <>
-      <h2 className="section-title">3. Project Specification</h2>
+      <h2 className="section-title">2. Project Specification</h2>
 
       <label className="label">Project Title*</label>
       <input
@@ -565,6 +511,7 @@ function ClientInfo() {
         onChange={handleChange}
         maxLength={150}
         className="input-base"
+        placeholder="E.g., Forecast customer churn risk from usage data"
       />
       {errors.project_title && (
         <div className="error-text">{errors.project_title}</div>
@@ -577,6 +524,7 @@ function ClientInfo() {
         onChange={handleChange}
         maxLength={300}
         className="textarea-base"
+        placeholder="1–2 sentences summarizing the problem and expected outcome"
       />
       <div
         className={
@@ -598,6 +546,7 @@ function ClientInfo() {
         onChange={handleChange}
         maxLength={5000}
         className="textarea-base"
+        placeholder="Background / who is impacted / current process / what success looks like"
       />
       <div
         className={
@@ -618,7 +567,8 @@ function ClientInfo() {
         value={form.minimum_deliverables}
         onChange={handleChange}
         className="textarea-base"
-        placeholder="Enter"
+        maxLength={5000}
+        placeholder="Describe the minimum achievable deliverables within the project timeline."
       />
       {errors.minimum_deliverables && (
         <div className="error-text">{errors.minimum_deliverables}</div>
@@ -632,7 +582,8 @@ function ClientInfo() {
         value={form.stretch_goals}
         onChange={handleChange}
         className="textarea-base"
-        placeholder="Enter"
+        maxLength={5000}
+        placeholder="Optional. Describe any stretch goals if applicable."
       />
       {errors.stretch_goals && (
         <div className="error-text">{errors.stretch_goals}</div>
@@ -646,7 +597,8 @@ function ClientInfo() {
         value={form.long_term_impact}
         onChange={handleChange}
         className="textarea-base"
-        placeholder="Enter"
+        maxLength={5000}
+        placeholder="Optional. Describe longer-term impact or follow-on opportunities."
       />
       {errors.long_term_impact && (
         <div className="error-text">{errors.long_term_impact}</div>
@@ -655,6 +607,7 @@ function ClientInfo() {
       <label className="label">
         Would you characterise your project as well defined with specific steps, or as exploratory with open ended goals?*
       </label>
+      <p className="muted">Choose the option that best matches how clear the scope is today.</p>
       <select
         name="scope_clarity"
         value={form.scope_clarity}
@@ -664,7 +617,7 @@ function ClientInfo() {
         <option value="">Select...</option>
         {SCOPE.map((s) => (
           <option key={s} value={s}>
-            {s}
+            {s.charAt(0).toUpperCase() + s.slice(1)}
           </option>
         ))}
       </select>
@@ -672,10 +625,8 @@ function ClientInfo() {
         <div className="error-text">{errors.scope_clarity}</div>
       )}
 
-      <label className="label">
-        Publication Potential: Kindly specify whether this project is anticipated to lead to a
-        research publication. There is no expectation or requirement for such an outcome.*
-      </label>
+      <label className="label">Publication Potential*</label>
+      <p className="muted">No expectation or requirement—this is only to understand potential outcomes.</p>
       <select
         name="publication_potential"
         value={form.publication_potential}
@@ -692,15 +643,15 @@ function ClientInfo() {
       )}
     </>,
 
-    // 3: Required Competencies & Technologies
+    // 2: Required Competencies & Technologies
     <>
-      <h2 className="section-title">4. Required Competencies and Technologies</h2>
+      <h2 className="section-title">3. Required Competencies and Technologies</h2>
 
       <MultiSelect
         options={SKILLS}
         value={form.required_skills}
         onChange={(v) => setForm((f) => ({ ...f, required_skills: v }))}
-        label="Required Skills"
+        label="Required Skills (select all that apply)"
         otherValue={form.required_skills_other}
         onOtherChange={(v) => setForm((f) => ({ ...f, required_skills_other: v }))}
       />
@@ -708,58 +659,31 @@ function ClientInfo() {
         <div className="error-text">{errors.required_skills_other}</div>
       )}
 
-      <MultiSelect
-        options={TECH_DOMAINS}
+      <label className="label">
+        Technical Domains (Optional): Add specific domains if applicable, such as IoT, advisement,
+        compliance and gaming.
+      </label>
+      <p className="muted">Optional. Separate items with commas or new lines.</p>
+      <textarea
+        name="technical_domains"
         value={form.technical_domains}
-        onChange={(v) => setForm((f) => ({ ...f, technical_domains: v }))}
-        label="Technical Domains"
-        otherValue={form.technical_domains_other}
-        onOtherChange={(v) => setForm((f) => ({ ...f, technical_domains_other: v }))}
-      />
-      {errors.technical_domains_other && (
-        <div className="error-text">{errors.technical_domains_other}</div>
-      )}
-
-      <label className="label">Project Sector (Industry Domain)*</label>
-      <select
-        name="project_sector"
-        value={form.project_sector}
         onChange={handleChange}
-        className="select-base"
-      >
-        <option value="">Select...</option>
-        {SECTORS.map((s) => (
-          <option key={s} value={s}>
-            {s}
-          </option>
-        ))}
-        <option value={OTHER_OPTION}>Other</option>
-      </select>
-      {errors.project_sector && (
-        <div className="error-text">{errors.project_sector}</div>
-      )}
-      {form.project_sector === OTHER_OPTION && (
-        <>
-          <input
-            name="project_sector_other"
-            value={form.project_sector_other}
-            onChange={handleChange}
-            placeholder="Enter sector"
-            className="input-base mt-2"
-          />
-          {errors.project_sector_other && (
-            <div className="error-text">{errors.project_sector_other}</div>
-          )}
-        </>
-      )}
+        className="textarea-base"
+        placeholder="Enter domains, separated by commas or new lines"
+      />
 
-      <label className="label">Data Access*</label>
+      <label className="label">
+        Data Access (If you plan to provide proprietary data, please briefly describe it. If not,
+        list recommended public datasets if any, or indicate that students will need to find all
+        relevant public data on their own.)*
+      </label>
+      <p className="muted">Include data type, size, access method, and any restrictions.</p>
       <textarea
         name="data_access"
         value={form.data_access}
         onChange={handleChange}
         className="textarea-base"
-        placeholder="Describe data assets, access methodology, and restrictions"
+        placeholder="Describe data access and sources"
       />
       {errors.data_access && (
         <div className="error-text">{errors.data_access}</div>
@@ -770,19 +694,29 @@ function ClientInfo() {
       )}
     </>,
 
-    // 4: Supplementary Materials
+    // 3: Supplementary Materials
     <>
-      <h2 className="section-title">5. Supplementary Materials</h2>
+      <h2 className="section-title">4. Supplementary Materials</h2>
+
+      <label className="label">Organization Website (Optional)</label>
+      <p className="muted">If applicable, paste the full URL including https://</p>
+      <input
+        type="url"
+        inputMode="url"
+        name="org_website"
+        value={form.org_website}
+        onChange={handleChange}
+        className="input-base"
+        placeholder="https://www.example.org"
+      />
+      {errors.org_website && (
+        <div className="error-text">{errors.org_website}</div>
+      )}
 
       <label className="label">Supplementary Documents</label>
       <p className="muted">
-        You may upload any supporting materials that help our student team understand your
-        project more effectively. Examples include PDFs, specification documents,
-        presentations, data samples, or background briefs. Sharing these materials gives the
-        team a clearer view of your goals, expected outcomes, and any existing work. This
-        allows the students to prepare more thoroughly, ask better questions during the
-        kickoff, and begin the engagement with a stronger foundation. Permitted formats
-        include PDF, document files, and presentation files.
+        Optional. Upload supporting docs (PDF/spec deck/sample data/background brief). Choose one file,
+        then click “Add file”.
       </p>
       <input
         type="file"
@@ -844,12 +778,7 @@ function ClientInfo() {
 
       <label className="label">Introductory or Relevant Videos (Optional)</label>
       <p className="muted">
-        You may share an optional link to an introductory video, a short overview of your
-        organisation, or any relevant demonstration. A brief video often conveys context that
-        is difficult to capture in text, and it helps the team understand your mission, your
-        users, and the problem space. This enables the team to align more quickly with your
-        vision and accelerates the early discovery process. Please ensure that the link is a
-        valid URL.
+        Optional. Paste up to 10 links (e.g., YouTube/Vimeo/Drive) to provide helpful context.
       </p>
       {form.video_links.map((v, i) => (
         <div key={i} className="flex gap-2 mb-2">
@@ -858,12 +787,17 @@ function ClientInfo() {
             onChange={(e) =>
               handleListChange("video_links", i, e.target.value)
             }
+            type="url"
+            inputMode="url"
+            placeholder="https://..."
             className="input-base"
           />
           {form.video_links.length > 1 && (
             <button
               type="button"
               onClick={() => removeListItem("video_links", i, 1)}
+              className="btn-secondary px-3 py-2"
+              aria-label="Remove video link"
             >
               -
             </button>
@@ -872,6 +806,8 @@ function ClientInfo() {
             <button
               type="button"
               onClick={() => addListItem("video_links", 10)}
+              className="btn-secondary px-3 py-2"
+              aria-label="Add video link"
             >
               +
             </button>
@@ -888,6 +824,25 @@ function ClientInfo() {
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-10 relative">
+      {banner ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <button
+            type="button"
+            aria-label="Dismiss banner"
+            className="absolute inset-0 bg-slate-900/20"
+            onClick={() => setBanner(null)}
+          />
+          <div className="relative card w-[min(40rem,calc(100%-2rem))] p-6 text-center">
+            <div className="font-heading text-duke-900 text-xl">Organization already submitted</div>
+            <div className="mt-2 text-sm text-slate-700">{banner}</div>
+            <div className="mt-5 flex justify-center">
+              <button type="button" className="btn-primary" onClick={() => setBanner(null)}>
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div className="absolute top-2 left-2 sm:top-4 sm:left-4 md:top-6 md:left-6">
         <img
           src="/assets/dukelogo.png"
@@ -899,7 +854,7 @@ function ClientInfo() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-heading text-duke-900">
-              Organisation Project Intake Form
+              Organization Project Intake Form
             </h1>
             <p className="muted">
               Step {page + 1} of {pages.length}
