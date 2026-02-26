@@ -24,7 +24,6 @@ from .persist import (
     mark_complete,
     mark_submitted,
     save_intake_form,
-    OrgAlreadyExistsError,
     get_latest_intakes,
     get_intake_by_token,
     update_intake_by_token,
@@ -202,11 +201,8 @@ def submit(session_id: str):
 
 @app.post("/client-intake")
 def create_client_intake(payload: IntakeForm):
-    try:
-        intake_id = save_intake_form(payload.model_dump(mode="json"))
-        return {"id": intake_id}
-    except OrgAlreadyExistsError as exc:
-        raise HTTPException(409, "ORG_ALREADY_EXISTS") from exc
+    intake_id = save_intake_form(payload.model_dump(mode="json"))
+    return {"id": intake_id}
 
 
 @app.post("/client-intake/upload")
@@ -243,12 +239,9 @@ def create_client_intake_upload(
     )
     edit_url = f"{edit_base}/edit/{edit_token}"
 
-    try:
-        intake_id = save_intake_form(
-            intake_payload, edit_token=edit_token, edit_url=edit_url
-        )
-    except OrgAlreadyExistsError as exc:
-        raise HTTPException(409, "ORG_ALREADY_EXISTS") from exc
+    intake_id = save_intake_form(
+        intake_payload, edit_token=edit_token, edit_url=edit_url
+    )
 
     try:
         send_edit_link_email(intake_payload.get("contact_email"), edit_url)

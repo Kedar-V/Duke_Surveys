@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { submitClientIntake, getClientIntakeForEdit, updateClientIntake } from "../api.js";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -45,36 +45,161 @@ const SKILLS = [
 const SCOPE = ["well defined", "partially defined", "exploratory"];
 const OTHER_OPTION = "__other__";
 
-function MultiSelect({ options, value, onChange, label, otherValue, onOtherChange }) {
-  const showOther = value.includes(OTHER_OPTION);
+function SearchableMultiSelect({
+  options,
+  value,
+  onChange,
+  label,
+  otherValue,
+  onOtherChange,
+}) {
+  const containerRef = useRef(null);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const selected = Array.isArray(value) ? value : [];
+  const showOther = selected.includes(OTHER_OPTION);
+
+  const filteredOptions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return options;
+    return options.filter((opt) => opt.toLowerCase().includes(q));
+  }, [options, query]);
+
+  const selectedChips = useMemo(() => {
+    const known = options.filter((opt) => selected.includes(opt));
+    const unknown = selected.filter(
+      (opt) => opt !== OTHER_OPTION && !options.includes(opt)
+    );
+    const other = selected.includes(OTHER_OPTION) ? [OTHER_OPTION] : [];
+    return [...known, ...unknown, ...other];
+  }, [options, selected]);
+
+  function setSelected(nextSelected) {
+    onChange(nextSelected);
+    if (!nextSelected.includes(OTHER_OPTION) && otherValue) {
+      onOtherChange("");
+    }
+  }
+
+  function toggleOption(opt) {
+    if (selected.includes(opt)) {
+      setSelected(selected.filter((v) => v !== opt));
+    } else {
+      setSelected([...selected, opt]);
+    }
+  }
+
+  useEffect(() => {
+    function onDocMouseDown(e) {
+      const el = containerRef.current;
+      if (!el) return;
+      if (el.contains(e.target)) return;
+      setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, []);
 
   return (
-    <div className="mb-4">
+    <div className="mb-4" ref={containerRef}>
       <label className="label">{label}</label>
-      <p className="muted">Tip: On desktop use Cmd/Ctrl-click to select multiple.</p>
-      <select
-        value={value}
-        onChange={(e) =>
-          onChange(Array.from(e.target.selectedOptions, (opt) => opt.value))
-        }
-        className="select-base"
-        multiple
-      >
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-        <option value={OTHER_OPTION}>Other</option>
-      </select>
-      {showOther && (
+      <p className="muted">Search and select multiple skills.</p>
+
+      <div className="relative">
+        <div className="flex items-stretch gap-2">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setOpen(true);
+            }}
+            onFocus={() => setOpen(true)}
+            placeholder="Search skills..."
+            className="input-base"
+            aria-label="Search required skills"
+          />
+          <button
+            type="button"
+            className="btn-secondary whitespace-nowrap"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+          >
+            {open ? "Close" : "Select"}
+          </button>
+        </div>
+
+        {open ? (
+          <div className="absolute z-10 mt-2 w-full rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div className="max-h-64 overflow-auto py-1">
+              {filteredOptions.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-slate-600">No matches</div>
+              ) : null}
+
+              {filteredOptions.map((opt) => {
+                const checked = selected.includes(opt);
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                    onClick={() => toggleOption(opt)}
+                  >
+                    <input type="checkbox" checked={checked} readOnly />
+                    <span>{opt}</span>
+                  </button>
+                );
+              })}
+
+              <div className="border-t border-slate-200 my-1" />
+              <button
+                type="button"
+                className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                onClick={() => toggleOption(OTHER_OPTION)}
+              >
+                <input type="checkbox" checked={selected.includes(OTHER_OPTION)} readOnly />
+                <span>Other</span>
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {selectedChips.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {selectedChips.map((opt) => {
+            const labelText = opt === OTHER_OPTION ? "Other" : String(opt);
+            return (
+              <span
+                key={opt}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm text-slate-700"
+              >
+                {labelText}
+                <button
+                  type="button"
+                  className="text-slate-500 hover:text-slate-700"
+                  aria-label={`Remove ${labelText}`}
+                  onClick={() => toggleOption(opt)}
+                >
+                  ×
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-3 text-sm text-slate-600">No skills selected yet.</div>
+      )}
+
+      {showOther ? (
         <input
           value={otherValue}
           onChange={(e) => onOtherChange(e.target.value)}
           placeholder="Other (e.g., Time-series forecasting)"
-          className="input-base mt-2"
+          className="input-base mt-3"
         />
-      )}
+      ) : null}
     </div>
   );
 }
@@ -435,14 +560,14 @@ function ClientInfo() {
         onChange={handleChange}
         maxLength={200}
         className="input-base"
-        placeholder='E.g., "Acme Health Systems" or "Duke University — Pratt (ECE)"'
+        placeholder='E.g., "Acme Health Systems" or "Duke University"'
       />
       {errors.org_name && (
         <div className="error-text">{errors.org_name}</div>
       )}
 
       <label className="label">Organization Industry*</label>
-      <p className="muted">If you are at Duke, specify your school and department.</p>
+      <p className="muted">If you are at Duke, please select other and specify your school & department.</p>
       <select
         name="org_industry"
         value={form.org_industry}
@@ -466,7 +591,7 @@ function ClientInfo() {
             name="org_industry_other"
             value={form.org_industry_other}
             onChange={handleChange}
-            placeholder="E.g., Public Policy — Sanford"
+            placeholder="E.g., Pratt — ECE"
             className="input-base mt-2"
           />
           {errors.org_industry_other && (
@@ -651,7 +776,7 @@ function ClientInfo() {
     <>
       <h2 className="section-title">3. Required Competencies and Technologies</h2>
 
-      <MultiSelect
+      <SearchableMultiSelect
         options={SKILLS}
         value={form.required_skills}
         onChange={(v) => setForm((f) => ({ ...f, required_skills: v }))}
@@ -827,7 +952,7 @@ function ClientInfo() {
   const isLastPage = page === pages.length - 1;
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10 relative">
+    <div className="min-h-screen bg-slate-50 px-4 py-8">
       {banner ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <button
@@ -847,14 +972,14 @@ function ClientInfo() {
           </div>
         </div>
       ) : null}
-      <div className="absolute top-2 left-2 sm:top-4 sm:left-4 md:top-6 md:left-6">
+      <div className="max-w-3xl mx-auto">
         <img
-          src="/assets/dukelogo.png"
+          src="/assets/dukelogo.svg"
           alt="Duke University"
-          className="h-[clamp(2.5rem,12vw,6rem)] sm:h-[clamp(3.25rem,8vw,8rem)] md:h-[clamp(3.75rem,6vw,7.5rem)] w-auto max-w-[55vw] sm:max-w-[45vw] md:max-w-[35vw] object-contain"
+          className="h-[clamp(2.25rem,10vw,4.5rem)] w-auto max-w-[55vw] sm:max-w-[40vw] object-contain"
         />
       </div>
-      <div className="card max-w-3xl mx-auto p-8 mt-10 sm:mt-2">
+      <div className="card max-w-3xl mx-auto p-8 mt-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-heading text-duke-900">

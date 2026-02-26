@@ -73,15 +73,51 @@ def save_intake_form(
     now = utcnow()
     org_name = (payload.get("org_name") or "").strip()
 
-    # If the org already exists, don't insert again.
+    # If the org already exists, overwrite the existing row (case-insensitive match).
     existing = (
         db.query(ClientIntakeFormRow)
         .filter(func.lower(ClientIntakeFormRow.org_name) == org_name.lower())
         .first()
     )
     if existing is not None:
+        revisions = list(existing.revisions or [])
+        revisions.append({"updated_at": now.isoformat(), "raw": existing.raw})
+
+        existing.raw = payload
+        existing.org_name = org_name
+        existing.org_industry = payload.get("org_industry")
+        existing.org_industry_other = payload.get("org_industry_other")
+        existing.org_website = payload.get("org_website")
+        existing.contact_name = payload.get("contact_name")
+        existing.contact_email = payload.get("contact_email")
+        existing.project_title = payload.get("project_title")
+        existing.project_summary = payload.get("project_summary")
+        existing.project_description = payload.get("project_description")
+        existing.minimum_deliverables = payload.get("minimum_deliverables")
+        existing.stretch_goals = payload.get("stretch_goals")
+        existing.long_term_impact = payload.get("long_term_impact")
+        existing.scope_clarity = payload.get("scope_clarity")
+        existing.scope_clarity_other = payload.get("scope_clarity_other")
+        existing.publication_potential = payload.get("publication_potential")
+        existing.required_skills = payload.get("required_skills", [])
+        existing.required_skills_other = payload.get("required_skills_other")
+        existing.technical_domains = payload.get("technical_domains", [])
+        existing.data_access = payload.get("data_access")
+        existing.project_sector = payload.get("project_sector")
+        existing.supplementary_documents = payload.get("supplementary_documents", [])
+        existing.video_links = payload.get("video_links", [])
+        existing.revisions = revisions
+        existing.updated_at = now
+
+        if edit_token is not None:
+            existing.edit_token = edit_token
+        if edit_url is not None:
+            existing.edit_url = edit_url
+
+        db.commit()
+        db.refresh(existing)
         db.close()
-        raise OrgAlreadyExistsError()
+        return str(existing.org_name)
 
     row = ClientIntakeFormRow(
         org_name=org_name,
